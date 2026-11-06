@@ -17,7 +17,10 @@ public class Config {
 
     /** Horizontal field of view in degrees. */
     public static final double FOV_DEGREES = 66.0;
-    /** Length of the camera plane vector (tan of half the FOV, with a unit direction vector). */
+    /**
+     * Length of the camera plane vector (tan of half the FOV, with a unit direction
+     * vector).
+     */
     public static final double CAMERA_PLANE_LENGTH = Math.tan(Math.toRadians(FOV_DEGREES / 2.0));
 
     /** Edge length of the square wall textures in pixels. */

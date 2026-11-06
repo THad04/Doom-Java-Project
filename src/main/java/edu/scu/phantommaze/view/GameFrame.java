@@ -11,10 +11,10 @@ public class GameFrame extends JFrame {
      * @param panel the panel to show
      */
     public GameFrame(GamePanel panel) {
-        super("Phantom Maze");
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
-        add(panel);
-        pack();
-        setLocationRelativeTo(null);
+        super("Phantom Maze"); // creates new frame named "Phantom Maze"
+        setDefaultCloseOperation(EXIT_ON_CLOSE); // when app closed, exit
+        add(panel); // add panel to frame
+        pack(); // resize window
+        setLocationRelativeTo(null); // center it
     }
 }
