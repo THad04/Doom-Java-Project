@@ -51,70 +51,89 @@ public final class WorldRenderer {
     /**
      * Renders one frame of walls.
      *
+     * <p>The screen is drawn one vertical column at a time. For each column we:
+     * (1) shoot a ray into the map, (2) work out how tall the wall looks,
+     * (3) pick a texture, (4) work out the fog, (5) paint ceiling, wall and floor.
+     *
      * @param pixels target RGB pixel buffer of size RENDER_WIDTH * RENDER_HEIGHT
      * @param player the camera
      * @param zBuffer receives the perpendicular wall distance per screen column
      */
     public void render(int[] pixels, Player player, double[] zBuffer) {
-        double px = player.getX();
-        double py = player.getY();
-        double dirX = player.getDirX();
-        double dirY = player.getDirY();
-        double planeX = player.getPlaneX();
-        double planeY = player.getPlaneY();
-        int half = H / 2;
+        int half = H / 2; // the horizon: ceiling above this row, floor below
 
         for (int x = 0; x < W; x++) {
-            // cameraX sweeps -1 (left edge) .. +1 (right edge) across the screen.
+            // 1. Shoot a ray through this column and find the wall it hits.
+            //    cameraX goes from -1 (left edge of the screen) to +1 (right edge).
             double cameraX = 2.0 * x / W - 1.0;
-            double rayX = dirX + planeX * cameraX;
-            double rayY = dirY + planeY * cameraX;
-            raycaster.cast(px, py, rayX, rayY, hit);
+            double rayX = player.getDirX() + player.getPlaneX() * cameraX;
+            double rayY = player.getDirY() + player.getPlaneY() * cameraX;
+            raycaster.cast(player.getX(), player.getY(), rayX, rayY, hit);
             zBuffer[x] = hit.distance;
 
-            // Wall height is inversely proportional to the (perpendicular) distance.
+            // 2. Wall height on screen: close walls are tall, far walls are short.
             int lineHeight = (int) (H / Math.max(hit.distance, 1e-4));
-            int start = -lineHeight / 2 + half;
-            int end = lineHeight / 2 + half;
-            int drawStart = Math.max(0, start);
+            int start = half - lineHeight / 2; // may be negative (wall taller than screen)
+            int end = half + lineHeight / 2;
+            int drawStart = Math.max(0, start); // clip to the screen
             int drawEnd = Math.min(H, end);
 
-            // Pick a texture: doors are metal, other walls vary by tile position.
-            int texId = map.getCell(hit.mapX, hit.mapY) == GameMap.DOOR
-                    ? TextureFactory.METAL
-                    : (hit.mapX * 7 + hit.mapY * 13) % 2;
-            int[] tex = textures[texId];
+            // 3. Pick the texture, and which column of it to use.
+            int[] tex = textures[chooseTexture()];
             int texX = Math.min(TEX - 1, (int) (hit.textureX * TEX));
 
-            // Fog: fade to the fog color with distance; y-sides are darker for depth cue.
+            // 4. Fog. "brightness" is 256 when the wall is close (fully visible)
+            //    and 0 when far away (fully fogged). Walls hit on their y-side are darker.
             double fog = Math.max(0.0, 1.0 - hit.distance / Config.FOG_DISTANCE);
-            fog *= fog;
-            int fogI = (int) (256 * fog);
-            double sideMul = hit.side == 1 ? Config.Y_SIDE_SHADE : 1.0;
-            int lit = (int) (fogI * sideMul);
-            int addR = (Config.FOG_R * (256 - fogI)) >> 8;
-            int addG = (Config.FOG_G * (256 - fogI)) >> 8;
-            int addB = (Config.FOG_B * (256 - fogI)) >> 8;
+            fog = fog * fog;
+            int brightness = (int) (256 * fog);
+            double sideShade = hit.side == 1 ? Config.Y_SIDE_SHADE : 1.0;
+            int wallLight = (int) (brightness * sideShade);
+            // How much of the fog color to blend in (more fog the further away).
+            int fogR = Config.FOG_R * (256 - brightness) / 256;
+            int fogG = Config.FOG_G * (256 - brightness) / 256;
+            int fogB = Config.FOG_B * (256 - brightness) / 256;
 
-            // Step through the texture once per screen pixel; begin offset handles clipped columns.
-            double step = (double) TEX / lineHeight;
-            double texPos = (drawStart - start) * step;
-
+            // 5. Paint the column top to bottom. idx is the pixel position in the
+            //    1D array: moving down one row means adding W (the screen width).
             int idx = x;
+
             for (int y = 0; y < drawStart; y++, idx += W) {
-                pixels[idx] = y < half ? ceilingRows[y] : floorRows[y - half];
+                pixels[idx] = backgroundColor(y, half);
             }
+
+            // How far to move through the 64-pixel texture for each screen pixel.
+            double texStep = (double) TEX / lineHeight;
+            double texY = (drawStart - start) * texStep; // skips the clipped part
             for (int y = drawStart; y < drawEnd; y++, idx += W) {
-                int c = tex[(((int) texPos) & (TEX - 1)) * TEX + texX];
-                texPos += step;
-                int r = (((c >> 16) & 255) * lit >> 8) + addR;
-                int g = (((c >> 8) & 255) * lit >> 8) + addG;
-                int b = ((c & 255) * lit >> 8) + addB;
-                pixels[idx] = (r << 16) | (g << 8) | b;
+                int color = tex[((int) texY % TEX) * TEX + texX];
+                texY += texStep;
+                // Split the color into red/green/blue (each 0-255), darken, add fog.
+                int red = ((color >> 16) & 255) * wallLight / 256 + fogR;
+                int green = ((color >> 8) & 255) * wallLight / 256 + fogG;
+                int blue = (color & 255) * wallLight / 256 + fogB;
+                pixels[idx] = (red << 16) | (green << 8) | blue; // pack back into one int
             }
+
             for (int y = drawEnd; y < H; y++, idx += W) {
-                pixels[idx] = y < half ? ceilingRows[y] : floorRows[y - half];
+                pixels[idx] = backgroundColor(y, half);
             }
         }
+    }
+
+    /** Doors are metal; other walls alternate between brick and stone by tile position. */
+    private int chooseTexture() {
+        if (map.getCell(hit.mapX, hit.mapY) == GameMap.DOOR) {
+            return TextureFactory.METAL;
+        }
+        return (hit.mapX * 7 + hit.mapY * 13) % 2; // 0 = brick, 1 = stone
+    }
+
+    /** Ceiling color above the horizon row, floor color below it. */
+    private int backgroundColor(int y, int half) {
+        if (y < half) {
+            return ceilingRows[y];
+        }
+        return floorRows[y - half];
     }
 }

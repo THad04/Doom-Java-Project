@@ -29,6 +29,13 @@ public final class Raycaster {
      * @return {@code out}
      */
     public RayHit cast(double posX, double posY, double rayDirX, double rayDirY, RayHit out) {
+        // HOW THIS WORKS (big picture):
+        // The map is a grid of square tiles. Starting inside one tile, we walk the ray
+        // forward one tile at a time -- stepping across either a vertical grid line (x)
+        // or a horizontal one (y), whichever the ray reaches first -- until we step into
+        // a wall tile. How far we walked is the distance to that wall.
+
+        // The tile the ray starts in (e.g. position 13.5 is inside tile 13).
         int mapX = (int) Math.floor(posX);
         int mapY = (int) Math.floor(posY);
 
@@ -55,6 +62,9 @@ public final class Raycaster {
             sideDistY = (mapY + 1.0 - posY) * deltaDistY;
         }
 
+        // The walking loop (called DDA). sideDistX / sideDistY are "how far along the ray
+        // is the next vertical / horizontal grid line". Always cross the nearer one.
+        // side remembers which kind of line we crossed last: 0 = vertical, 1 = horizontal.
         // DDA: always step across whichever grid line is closer, until a wall is entered.
         // Out-of-bounds counts as wall, so this always terminates.
         int side;
