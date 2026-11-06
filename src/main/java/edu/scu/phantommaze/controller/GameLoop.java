@@ -6,10 +6,10 @@ import javax.swing.JComponent;
 import javax.swing.Timer;
 
 /**
- * Fixed-timestep game loop (about 60 updates per second). Runs on the Swing event
- * thread, so the model and the renderer never touch each other concurrently.
+ * The game loop. About 60 times a second it reads the keys, updates the game,
+ * and repaints the screen. Runs on the Swing event thread.
  */
-public final class GameLoop {
+public class GameLoop {
 
     private static final double STEP = 1.0 / Config.TARGET_FPS;
 
@@ -17,39 +17,33 @@ public final class GameLoop {
     private final InputController input;
     private final JComponent view;
     private final Timer timer;
-    private long lastNanos;
-    private double accumulator;
 
     /**
      * Creates the loop (not yet running).
      *
-     * @param game the model to update
+     * @param game  the model to update
      * @param input the input source
-     * @param view the component to repaint after each tick
+     * @param view  the component to repaint after each tick
      */
     public GameLoop(Game game, InputController input, JComponent view) {
         this.game = game;
         this.input = input;
         this.view = view;
+        // calls code at a regular interval of every 16 ms (60 fps)
+        // whenever the timer fires, call tick()
         this.timer = new Timer(1000 / Config.TARGET_FPS, e -> tick());
         this.timer.setCoalesce(true);
     }
 
     /** Starts the loop. */
     public void start() {
-        lastNanos = System.nanoTime();
-        timer.start();
+        timer.start(); // start the loop
     }
 
+    /** One step of the game: read the keys, update the game, redraw. */
     private void tick() {
-        long now = System.nanoTime();
-        accumulator += Math.min((now - lastNanos) / 1e9, Config.MAX_FRAME_TIME);
-        lastNanos = now;
-        while (accumulator >= STEP) {
-            input.applyTo(game.getPlayer());
-            game.update(STEP);
-            accumulator -= STEP;
-        }
+        input.applyTo(game.getPlayer());
+        game.update(STEP);
         view.repaint();
     }
 }

@@ -1,7 +1,7 @@
 package edu.scu.phantommaze.engine;
 
 /** Mutable result of a ray cast; reused between casts to avoid per-frame allocation. */
-public final class RayHit {
+public class RayHit {
 
     /** Perpendicular (fisheye-corrected) distance to the wall. */
     public double distance;

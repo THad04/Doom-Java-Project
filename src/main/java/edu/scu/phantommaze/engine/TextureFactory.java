@@ -4,7 +4,7 @@ import edu.scu.phantommaze.Config;
 import java.util.Random;
 
 /** Generates the wall textures procedurally as packed RGB int arrays (no image files). */
-public final class TextureFactory {
+public class TextureFactory {
 
     /** Number of textures returned by {@link #createWallTextures()}. */
     public static final int COUNT = 3;
@@ -16,10 +16,6 @@ public final class TextureFactory {
     public static final int METAL = 2;
 
     private static final int S = Config.TEXTURE_SIZE;
-
-    private TextureFactory() {
-        // static factory
-    }
 
     /**
      * Creates all wall textures.

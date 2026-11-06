@@ -11,7 +11,7 @@ import edu.scu.phantommaze.model.Player;
  * Draws the textured, fogged 3D walls plus the ceiling/floor gradient into an int[] pixel buffer.
  * Allocates nothing while rendering; fills the z-buffer used later to occlude sprites.
  */
-public final class WorldRenderer {
+public class WorldRenderer {
 
     private static final int W = Config.RENDER_WIDTH;
     private static final int H = Config.RENDER_HEIGHT;

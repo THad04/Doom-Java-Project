@@ -1,27 +1,22 @@
 package edu.scu.phantommaze.model;
 
-import java.util.Random;
-
 /**
  * Root of the game model. Owns the map, the player and the current state.
  * (Ghosts, scoring and lives arrive in later milestones.)
  */
-public final class Game {
+public class Game {
 
     private final GameMap map;
     private final Player player;
-    private final Random random;
     private GameState state = GameState.PLAYING;
 
     /**
      * Creates a game on a map.
      *
      * @param map the level map
-     * @param random source of all randomness (injectable for tests)
      */
-    public Game(GameMap map, Random random) {
+    public Game(GameMap map) {
         this.map = map;
-        this.random = random;
         this.player = new Player(map.getPlayerStart(), 0.0);
     }
 
@@ -61,14 +56,5 @@ public final class Game {
      */
     public GameState getState() {
         return state;
-    }
-
-    /**
-     * Returns the injected random source.
-     *
-     * @return the random
-     */
-    public Random getRandom() {
-        return random;
     }
 }

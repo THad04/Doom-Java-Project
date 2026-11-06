@@ -3,7 +3,7 @@ package edu.scu.phantommaze.engine;
 import edu.scu.phantommaze.model.GameMap;
 
 /** Pure-math DDA ray caster against a {@link GameMap}. Contains no Swing code. */
-public final class Raycaster {
+public class Raycaster {
 
     private final GameMap map;
 
@@ -40,8 +40,15 @@ public final class Raycaster {
         int mapY = (int) Math.floor(posY);
 
         // Distance the ray travels to cross one full tile in x / y.
-        double deltaDistX = rayDirX == 0 ? Double.MAX_VALUE : Math.abs(1.0 / rayDirX);
-        double deltaDistY = rayDirY == 0 ? Double.MAX_VALUE : Math.abs(1.0 / rayDirY);
+        // (If the ray is perfectly straight along an axis it never crosses that axis' lines.)
+        double deltaDistX = Double.MAX_VALUE;
+        if (rayDirX != 0) {
+            deltaDistX = Math.abs(1.0 / rayDirX);
+        }
+        double deltaDistY = Double.MAX_VALUE;
+        if (rayDirY != 0) {
+            deltaDistY = Math.abs(1.0 / rayDirY);
+        }
 
         int stepX;
         int stepY;

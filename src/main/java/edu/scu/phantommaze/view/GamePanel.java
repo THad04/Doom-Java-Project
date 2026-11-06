@@ -13,17 +13,15 @@ import javax.swing.JPanel;
 /**
  * Panel that renders the game into a low-resolution off-screen image and scales it to the window.
  */
-public final class GamePanel extends JPanel {
+public class GamePanel extends JPanel {
 
-    private static final long serialVersionUID = 1L;
-
-    private final transient Game game;
-    private final transient BufferedImage frame =
+    private final Game game;
+    private final BufferedImage frame =
             new BufferedImage(Config.RENDER_WIDTH, Config.RENDER_HEIGHT, BufferedImage.TYPE_INT_RGB);
-    private final transient int[] pixels = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
-    private final transient double[] zBuffer = new double[Config.RENDER_WIDTH];
-    private final transient WorldRenderer worldRenderer;
-    private final transient MinimapRenderer minimapRenderer = new MinimapRenderer();
+    private final int[] pixels = ((DataBufferInt) frame.getRaster().getDataBuffer()).getData();
+    private final double[] zBuffer = new double[Config.RENDER_WIDTH];
+    private final WorldRenderer worldRenderer;
+    private final MinimapRenderer minimapRenderer = new MinimapRenderer();
     private boolean showMinimap = true;
 
     /**

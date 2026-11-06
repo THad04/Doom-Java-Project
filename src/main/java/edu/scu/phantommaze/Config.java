@@ -4,7 +4,7 @@ package edu.scu.phantommaze;
  * Central place for every tunable constant in the game (resolution, speeds,
  * colors, ...), so no magic numbers are scattered through the code.
  */
-public final class Config {
+public class Config {
 
     /** Width of the off-screen render buffer in pixels. */
     public static final int RENDER_WIDTH = 640;
@@ -30,10 +30,8 @@ public final class Config {
     /** Player collision radius in tiles. */
     public static final double PLAYER_RADIUS = 0.25;
 
-    /** Target frames (and fixed updates) per second. */
+    /** Target frames (and updates) per second. */
     public static final int TARGET_FPS = 60;
-    /** Largest amount of simulated time processed in one frame, in seconds. */
-    public static final double MAX_FRAME_TIME = 0.25;
 
     /** Distance (in tiles) at which walls fade completely into the fog. */
     public static final double FOG_DISTANCE = 12.0;
@@ -59,8 +57,4 @@ public final class Config {
     public static final int MINIMAP_TILE = 7;
     /** Margin between the minimap and the window edge in pixels. */
     public static final int MINIMAP_MARGIN = 12;
-
-    private Config() {
-        // constants holder, not instantiable
-    }
 }

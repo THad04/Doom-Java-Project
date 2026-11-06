@@ -9,7 +9,7 @@ import javax.swing.JComponent;
  * Listens to the keyboard and remembers which movement keys are currently held down.
  * Each game tick, {@link #applyTo(Player)} copies that information into the player.
  */
-public final class InputController {
+public class InputController {
 
     private boolean forward;
     private boolean back;

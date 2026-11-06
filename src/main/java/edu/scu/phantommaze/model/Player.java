@@ -6,7 +6,7 @@ import edu.scu.phantommaze.Config;
  * The player: position, facing, and camera plane, with wall-sliding movement.
  * Input is expressed as intents (-1..1) set by the controller before each update.
  */
-public final class Player {
+public class Player {
 
     private double x;
     private double y;

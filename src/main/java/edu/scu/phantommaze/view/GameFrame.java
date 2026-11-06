@@ -3,9 +3,7 @@ package edu.scu.phantommaze.view;
 import javax.swing.JFrame;
 
 /** The main application window. */
-public final class GameFrame extends JFrame {
-
-    private static final long serialVersionUID = 1L;
+public class GameFrame extends JFrame {
 
     /**
      * Creates the window around a game panel.

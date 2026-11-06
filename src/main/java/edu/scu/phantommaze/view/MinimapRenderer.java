@@ -8,7 +8,7 @@ import java.awt.Graphics2D;
 import java.awt.geom.Path2D;
 
 /** Draws a top-down minimap with the player's position and view cone. */
-public final class MinimapRenderer {
+public class MinimapRenderer {
 
     private static final Color BACKGROUND = new Color(0, 0, 0, 170);
     private static final Color WALL = new Color(90, 70, 160);

@@ -13,7 +13,7 @@ import java.util.List;
  * {@code o} power pellet, {@code P} player start, {@code G} ghost pen tile,
  * {@code -} pen door, space = empty.
  */
-public final class GameMap {
+public class GameMap {
 
     /** Character for a wall tile. */
     public static final char WALL = '#';
