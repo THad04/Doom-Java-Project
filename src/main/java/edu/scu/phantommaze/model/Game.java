@@ -6,9 +6,9 @@ package edu.scu.phantommaze.model;
  */
 public class Game {
 
-    private final GameMap map;
-    private final Player player;
-    private GameState state = GameState.PLAYING;
+    private final GameMap map; // the level
+    private final Player player; // the user
+    private GameState state = GameState.PLAYING; // what mode the game is in
 
     /**
      * Creates a game on a map.
@@ -17,6 +17,7 @@ public class Game {
      */
     public Game(GameMap map) {
         this.map = map;
+        // asks the map where P is, then spawns player facing east
         this.player = new Player(map.getPlayerStart(), 0.0);
     }
 
@@ -26,7 +27,7 @@ public class Game {
      * @param dt seconds elapsed
      */
     public void update(double dt) {
-        if (state == GameState.PLAYING) {
+        if (state == GameState.PLAYING) { // passes time step to player
             player.update(dt, map);
         }
     }

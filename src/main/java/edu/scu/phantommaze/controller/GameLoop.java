@@ -32,18 +32,18 @@ public class GameLoop {
         // calls code at a regular interval of every 16 ms (60 fps)
         // whenever the timer fires, call tick()
         this.timer = new Timer(1000 / Config.TARGET_FPS, e -> tick());
-        this.timer.setCoalesce(true);
+        this.timer.setCoalesce(true); // if computer falls behind merge them into one
     }
 
     /** Starts the loop. */
     public void start() {
-        timer.start(); // start the loop
+        timer.start(); // called at the end of app.java
     }
 
     /** One step of the game: read the keys, update the game, redraw. */
     private void tick() {
-        input.applyTo(game.getPlayer());
-        game.update(STEP);
-        view.repaint();
+        input.applyTo(game.getPlayer()); // copy held keys into player intent
+        game.update(STEP); // advance simulation by 1/60 s
+        view.repaint(); // swing redraws the screen
     }
 }
