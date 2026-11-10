@@ -44,7 +44,9 @@ public enum Sound {
     /** BFG blast hitting enemies. */
     BFG_EXPLOSION("dsrxplod"),
     /** Rampage mode starting: a burst of flame. */
-    RAMPAGE("dsflamst");
+    RAMPAGE("dsflamst"),
+    /** A dot eaten. */
+    DOT("dsitemup");
 
     /** File name without the {@code .wav} extension. */
     public final String fileName;

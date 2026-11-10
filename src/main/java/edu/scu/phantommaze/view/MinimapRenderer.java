@@ -14,7 +14,7 @@ import java.util.EnumMap;
 import java.util.Map;
 
 /**
- * Draws a top-down minimap with the player's position and view cone, the remaining
+ * Draws a top-down minimap with the player's position and view cone, the remaining dots and
  * power-ups, and the enemies (only while the player has the shotgun power-up).
  */
 public class MinimapRenderer {
@@ -25,6 +25,7 @@ public class MinimapRenderer {
     private static final Color CONE = new Color(255, 255, 120, 90);
     private static final Color PLAYER = new Color(255, 230, 40);
     private static final Color POWER_UP = new Color(80, 230, 80);
+    private static final Color DOT = new Color(255, 220, 120);
     private static final Color FRIGHTENED = new Color(60, 90, 255);
     private static final double CONE_LENGTH = 5.0;
 
@@ -82,11 +83,22 @@ public class MinimapRenderer {
         int w = map.getWidth() * t;
         int h = map.getHeight() * t;
         int ox = windowWidth - w - Config.MINIMAP_MARGIN;
-        int oy = Config.MINIMAP_MARGIN;
+        // Leave room above for the HUD's score line (drawn at 2 Doom pixels from the top).
+        int oy = Config.MINIMAP_MARGIN + (int) ((2 + DoomFont.lineHeight() + 1) * Config.HUD_SCALE
+                * windowWidth / (double) Config.RENDER_WIDTH);
 
         g.setColor(BACKGROUND);
         g.fillRect(ox - 2, oy - 2, w + 4, h + 4);
         g.drawImage(wallLayer(map), ox, oy, null);
+
+        g.setColor(DOT);
+        for (int y = 0; y < map.getHeight(); y++) {
+            for (int x = 0; x < map.getWidth(); x++) {
+                if (map.getCell(x, y) == GameMap.DOT) {
+                    g.fillRect(ox + x * t + t / 2 - 1, oy + y * t + t / 2 - 1, 2, 2);
+                }
+            }
+        }
 
         g.setColor(POWER_UP);
         for (int[] p : game.getPowerUps()) {

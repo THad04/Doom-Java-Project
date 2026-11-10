@@ -19,7 +19,7 @@ final class ModelTestMaps {
                 firstRow,
                 "#           #",
                 "#           #",
-                "#           #",
+                "#          .#", // one dot, so taking the power-up never finishes the level
                 "#####-#######",
                 "####GGG######",
                 "#############"));

@@ -26,6 +26,8 @@ public class GameMap {
     public static final char POWER_UP = 'o';
     /** Character for an empty floor tile. */
     public static final char EMPTY = ' ';
+    /** Character for a dot: eat them all to win. */
+    public static final char DOT = '.';
 
     private final char[][] cells; // indexed [y][x] row then column
     private final int width; // columns
@@ -59,7 +61,7 @@ public class GameMap {
                     c = EMPTY; // make location blank
                 } else if (c == PEN) { // remembers positions for ghosts
                     penTiles.add(new int[] { x, y });
-                } else if (c == '.' || c == POWER_UP) { // iterates pellet count
+                } else if (c == DOT || c == POWER_UP) { // iterates pellet count
                     pelletCount++;
                 }
                 cells[y][x] = c; // mark locations of each char in 2d array

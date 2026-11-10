@@ -98,6 +98,30 @@ public class Config {
     /** Seconds a BFG explosion stays visible. */
     public static final double BLAST_TIME = 0.5;
 
+    /** Points for eating a dot. */
+    public static final int DOT_POINTS = 10;
+    /** Points for picking up a power-up. */
+    public static final int POWER_UP_POINTS = 50;
+    /**
+     * Points for the first frightened enemy killed during a power-up. Like Pac-Man's ghosts,
+     * each further kill in the same power-up doubles it: 200, 400, 800, then 1600.
+     */
+    public static final int FRIGHTENED_KILL_POINTS = 200;
+    /** Highest frightened-kill value (the doubling stops here). */
+    public static final int MAX_FRIGHTENED_KILL_POINTS = 1600;
+    /** Points for a pistol kill without a power-up. */
+    public static final int PISTOL_KILL_POINTS = 100;
+    /** Points for each enemy the BFG kills during rampage. */
+    public static final int BFG_KILL_POINTS = 200;
+    /** Bonus per life left when every dot is eaten. */
+    public static final int LIFE_BONUS_POINTS = 1000;
+    /** Pac-Man's "Cruise Elroy": with this many dots left the Cacodemon speeds up and stops taking breaks. */
+    public static final int ELROY_DOTS = 20;
+    /** With this many dots left the Cacodemon speeds up a second time. */
+    public static final int ELROY_2_DOTS = 10;
+    /** How much faster the Cacodemon gets at each Elroy step (0.10 = 10%). */
+    public static final double ELROY_SPEED_STEP = 0.10;
+
     /** Distance in tiles between the player and an enemy that counts as being caught. */
     public static final double CATCH_DISTANCE = 0.55;
     /** Seconds an enemy's death animation plays before it reappears in the pen. */

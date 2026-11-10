@@ -68,14 +68,14 @@ public class ScreenController implements InputController.Actions {
 
     @Override
     public void confirm() {
-        if (game != null && game.getState() == GameState.GAME_OVER) {
+        if (game != null && (game.getState() == GameState.GAME_OVER || game.getState() == GameState.LEVEL_COMPLETE)) {
             showMenu();
         }
     }
 
     @Override
     public void quitToMenu() {
-        if (game != null && (game.getState() == GameState.PAUSED || game.getState() == GameState.GAME_OVER)) {
+        if (game != null && game.getState() != GameState.PLAYING) { // paused, game over, or level complete
             showMenu();
         }
     }

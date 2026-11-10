@@ -106,7 +106,7 @@ public class SpriteRenderer {
             depth[i] = (worldX[i] - player.getX()) * dirX + (worldY[i] - player.getY()) * dirY;
             order[i] = i;
         }
-        // Sort far to near (insertion sort: there are only a handful of sprites).
+        // Sort far to near (insertion sort: a few hundred sprites at most, so it is quick enough).
         for (int i = 1; i < count; i++) {
             int item = order[i];
             int j = i - 1;

@@ -20,6 +20,8 @@ public class Game {
     private static final double MESSAGE_TIME = 3.0;
     /** Seconds the screen flashes gold after picking up a power-up. */
     private static final double PICKUP_FLASH_TIME = 0.3;
+    /** Dots are eaten every fraction of a second, so their sound is kept quiet. */
+    private static final double DOT_VOLUME = 0.35;
 
     private final GameMap map; // the level
     private final Player player; // the user
@@ -36,6 +38,9 @@ public class Game {
 
     private int lives = Config.PLAYER_LIVES;
     private int kills;
+    private int score;
+    private int dotsLeft; // dots and power-ups still on the map; 0 = level complete
+    private int frightenedKills; // frightened enemies killed during this power-up (doubles their points)
     private double time; // seconds of play so far
     private double hitFreeze; // > 0 while the world is frozen after the player was caught
     private double graceTimer; // > 0 while the player just respawned and cannot be hurt
@@ -86,6 +91,7 @@ public class Game {
             }
         }
         this.ai = new EnemyAI(map, player, enemies, penExit);
+        this.dotsLeft = map.getPelletCount();
         startRound();
     }
 
@@ -130,6 +136,10 @@ public class Game {
         weapons.update(dt);
         updatePowerUp(dt);
         pickUpPowerUp();
+        eatDot();
+        if (state != GameState.PLAYING) {
+            return; // that was the last dot
+        }
         updateRampage(dt);
         if (triggerHeld) {
             fire();
@@ -178,7 +188,11 @@ public class Game {
                 if (!e.isInPain()) {
                     boolean fleeing = e.getState() == Enemy.State.ACTIVE && e.isFrightened();
                     double speed = fleeing ? difficulty.fleeSpeed : difficulty.enemySpeed;
-                    ai.move(e, speed * dt, scatterMode);
+                    boolean elroy = !fleeing && e.getType() == EnemyType.CACODEMON && elroyLevel() > 0;
+                    if (elroy) {
+                        speed *= 1.0 + Config.ELROY_SPEED_STEP * elroyLevel();
+                    }
+                    ai.move(e, speed * dt, scatterMode && !elroy); // Elroy keeps chasing during breaks
                 }
                 break;
         }
@@ -320,6 +334,7 @@ public class Game {
 
     private void eliminate(Enemy e) {
         sounds.play(e.getType().deathSound, volumeFor(e), panFor(e));
+        score += killPoints(e); // before kill(), which clears the frightened flag
         e.kill();
         kills++;
         if (powerUpTimer > 0 && !rampage) {
@@ -329,6 +344,22 @@ public class Game {
                 showMessage("COMBO " + combo.getCount() + "/" + enemies.size());
             }
         }
+    }
+
+    /**
+     * Points for a kill: BFG kills during rampage are flat; frightened enemies double in value
+     * with each kill in the same power-up, like Pac-Man's ghosts; anything else is a pistol kill.
+     */
+    private int killPoints(Enemy e) {
+        if (rampage) {
+            return Config.BFG_KILL_POINTS;
+        }
+        if (e.isFrightened()) {
+            int points = Math.min(Config.MAX_FRIGHTENED_KILL_POINTS, Config.FRIGHTENED_KILL_POINTS << frightenedKills);
+            frightenedKills++;
+            return points;
+        }
+        return Config.PISTOL_KILL_POINTS;
     }
 
     /**
@@ -405,6 +436,7 @@ public class Game {
             powerUpTimer = difficulty.powerUpDuration;
             weapons.equipShotgun();
             combo.reset(); // every power-up gets its own chance at a combo
+            frightenedKills = 0; // and its own 200-400-800-1600 chain
             showMessage("YOU GOT THE SHOTGUN!");
         }
         powerUpTotal = powerUpTimer;
@@ -420,6 +452,43 @@ public class Game {
             }
             e.setFrightened(true);
         }
+        collect(Config.POWER_UP_POINTS);
+    }
+
+    /** Eats the dot on the player's tile, if there is one. */
+    private void eatDot() {
+        int tx = (int) Math.floor(player.getX());
+        int ty = (int) Math.floor(player.getY());
+        if (map.getCell(tx, ty) != GameMap.DOT) {
+            return;
+        }
+        map.setCell(tx, ty, GameMap.EMPTY);
+        sounds.play(Sound.DOT, DOT_VOLUME, 0.0);
+        collect(Config.DOT_POINTS);
+    }
+
+    /** Scores a dot or power-up; eating the last one completes the level. */
+    private void collect(int points) {
+        score += points;
+        dotsLeft--;
+        if (dotsLeft == 0) {
+            score += lives * Config.LIFE_BONUS_POINTS;
+            state = GameState.LEVEL_COMPLETE;
+            triggerHeld = false;
+            sounds.play(Sound.POWER_UP, 1.0, 0.0);
+        }
+    }
+
+    /**
+     * Pac-Man's "Cruise Elroy" for the Cacodemon (Blinky).
+     *
+     * @return 0 normally, 1 with {@link Config#ELROY_DOTS} dots left, 2 with {@link Config#ELROY_2_DOTS} left
+     */
+    private int elroyLevel() {
+        if (dotsLeft <= Config.ELROY_2_DOTS) {
+            return 2;
+        }
+        return dotsLeft <= Config.ELROY_DOTS ? 1 : 0;
     }
 
     private void updatePowerUp(double dt) {
@@ -435,6 +504,7 @@ public class Game {
             returnToPistol();
         }
         endRampage();
+        frightenedKills = 0;
         for (int i = 0; i < enemies.size(); i++) {
             Enemy e = enemies.get(i);
             e.setFrightened(false);
@@ -756,6 +826,16 @@ public class Game {
     /** @return enemies eliminated so far */
     public int getKills() {
         return kills;
+    }
+
+    /** @return points scored so far */
+    public int getScore() {
+        return score;
+    }
+
+    /** @return dots and power-ups still to eat; the level is complete at 0 */
+    public int getDotsLeft() {
+        return dotsLeft;
     }
 
     /** @return seconds of play so far */

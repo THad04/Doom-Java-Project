@@ -32,6 +32,10 @@ public class HudRenderer {
     private static final int AMMO_RIGHT = 44; // right edge of the ammo number
     private static final int HEALTH_RIGHT = 90;
     private static final int ARMOR_RIGHT = 221;
+    /** Dots left go in the right-hand panel (painted-over columns 262-314); 3 big digits fit. */
+    private static final int DOTS_RIGHT = 307;
+    private static final int DOTS_LABEL_CENTER = 288;
+    private static final int LABEL_Y = 190;
     private static final int FACE_X = 143;
     /** Doom draws the gun 16 pixels higher when the status bar is showing. */
     private static final int WEAPON_TOP = 32 - 16;
@@ -59,7 +63,8 @@ public class HudRenderer {
     private static final Font HINT_FONT = new Font(Font.SANS_SERIF, Font.BOLD, 20);
     private static final Color HINT_TEXT = new Color(230, 220, 200);
     private static final String[] PAUSE_HINTS = { "Click to resume", "Press Q for the main menu" };
-    private static final String[] GAME_OVER_HINTS = { "Press Enter for the main menu" };
+    private static final String MENU_HINT = "Press Enter for the main menu";
+    private static final String[] GAME_OVER_HINTS = { MENU_HINT };
 
     /** Alpha levels the red / gold screen flashes are rounded to, so none are created per frame. */
     private static final int TINT_STEPS = 64;
@@ -106,6 +111,10 @@ public class HudRenderer {
     private final Patch bfgFlash1 = Assets.sprite("bfgfa0");
     private final Patch bfgFlash2 = Assets.sprite("bfgfb0");
     private final Patch[] flames = new Patch[8];
+    private int shownScore = -1; // the score that scoreText was built for, so it is rebuilt only when it changes
+    private String scoreText;
+    private Game winLinesGame; // the game winLines was built for
+    private String[] winLines;
 
     /** Loads the HUD pictures. */
     public HudRenderer() {
@@ -151,6 +160,7 @@ public class HudRenderer {
             DoomFont.draw(g, message, 2 * S, 2 * S, S);
         }
         drawComboBar(g, game);
+        drawScore(g, game);
         if (game.getRampageTransition() > 0) {
             DoomFont.drawCentered(g, "RAMPAGE!", Config.RENDER_WIDTH / 2, Config.VIEW_HEIGHT / 4, 5);
         }
@@ -323,6 +333,32 @@ public class HudRenderer {
         drawNumber(g, game.getArmorPercent(), ARMOR_RIGHT);
         drawPatch(g, percent, ARMOR_RIGHT, NUMBER_Y);
         drawPatch(g, chooseFace(game), FACE_X, BAR_Y);
+        drawNumber(g, game.getDotsLeft(), DOTS_RIGHT);
+        DoomFont.drawCentered(g, "DOTS", DOTS_LABEL_CENTER * S, LABEL_Y * S, S);
+    }
+
+    /** The score in the top-right corner (the minimap sits just below it). */
+    private void drawScore(Graphics2D g, Game game) {
+        if (game.getScore() != shownScore) {
+            shownScore = game.getScore();
+            scoreText = "SCORE " + shownScore;
+        }
+        DoomFont.draw(g, scoreText, Config.RENDER_WIDTH - (DoomFont.width(scoreText) + 2) * S, 2 * S, S);
+    }
+
+    /** The win screen's lines: final score, time, and kills, worked out once per game. */
+    private String[] winLines(Game game) {
+        if (winLinesGame != game) {
+            winLinesGame = game;
+            int seconds = (int) game.getTime();
+            winLines = new String[] {
+                "Score  " + game.getScore(),
+                String.format("Time  %d:%02d", seconds / 60, seconds % 60),
+                "Kills  " + game.getKills(),
+                MENU_HINT,
+            };
+        }
+        return winLines;
     }
 
     /**
@@ -417,6 +453,9 @@ public class HudRenderer {
         } else if (game.getState() == GameState.GAME_OVER) {
             title = "GAME OVER";
             hints = GAME_OVER_HINTS;
+        } else if (game.getState() == GameState.LEVEL_COMPLETE) {
+            title = "LEVEL COMPLETE";
+            hints = winLines(game);
         } else {
             return;
         }

@@ -115,6 +115,7 @@ public class MenuPanel extends JPanel {
             "W A S D  move      Mouse / Left-Right arrows  turn",
             "Left click / Space  shoot      R  reload      M  minimap",
             "Esc  pause (click to resume, Q for this menu)",
+            "Eat every glowing dot to win.",
             "Grab a corner power-up for the shotgun and armor: enemies flee, one shell kills.",
             "Kill all 4 within 4 seconds of each other for RAMPAGE mode and the BFG.",
         };

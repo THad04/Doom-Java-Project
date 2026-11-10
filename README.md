@@ -16,6 +16,9 @@ Open the folder in IntelliJ IDEA as a Maven project and run `edu.scu.phantommaze
 While playing, the mouse pointer is hidden and held in the middle of the window. On macOS this uses CoreGraphics through the JNA library, so no Accessibility permission is needed; IntelliJ downloads JNA automatically from `pom.xml`.
 
 ## Gameplay
+- Goal: eat every glowing dot (and the 4 power-ups) to complete the level. Eaten dots stay eaten when you lose a life. The status bar shows the dots left; the win screen shows score, time, and kills.
+- Score: dot 10, power-up 50, frightened enemy 200 → 400 → 800 → 1600 (doubling within one power-up), pistol kill 100, BFG kill 200, and 1000 per life left when the level is complete.
+- With 20 dots left the Cacodemon gets 10% faster and stops taking breaks; with 10 left it gets another 10% faster (Pac-Man's "Cruise Elroy").
 - Four enemies: Cacodemon (direct chaser), Demon (ambusher), Lost Soul (flanker), and Imp (shy chaser).
 - You can take three hits: health goes 100% → 67% → 33% → 0%.
 - The pistol holds 3 bullets, reloads without running out, and needs 3 hits to send an enemy back to its spawn.
