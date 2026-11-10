@@ -91,6 +91,30 @@ class EnemyAI {
     }
 
     /**
+     * One step along the shortest walk from a tile toward the player.
+     *
+     * @param x tile column
+     * @param y tile row
+     * @return index of the neighbouring tile one step closer, or the tile's own index if it is
+     *         the player's tile or cannot reach the player
+     */
+    int stepTowardPlayer(int x, int y) {
+        int tile = pathfinder.index(x, y);
+        int steps = playerField[tile];
+        if (steps == 0 || steps == Pathfinder.UNREACHABLE) {
+            return tile;
+        }
+        for (int d = 0; d < Pathfinder.DX.length; d++) {
+            int nx = x + Pathfinder.DX[d];
+            int ny = y + Pathfinder.DY[d];
+            if (pathfinder.isWalkable(nx, ny, false) && playerField[pathfinder.index(nx, ny)] == steps - 1) {
+                return pathfinder.index(nx, ny);
+            }
+        }
+        return tile;
+    }
+
+    /**
      * Moves an enemy along the maze, turning at every tile center it reaches.
      *
      * @param e           the enemy (leaving the pen or active)

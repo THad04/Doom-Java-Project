@@ -34,6 +34,7 @@ public class GamePanel extends JPanel {
     private final Patch powerUpSprite = Assets.sprite("shota0");
     private final HudRenderer hudRenderer = new HudRenderer();
     private final MinimapRenderer minimapRenderer = new MinimapRenderer();
+    private final ThreatIndicator threatIndicator = new ThreatIndicator();
     private SpriteRenderer spriteRenderer; // sized for the game's enemies and pickups in setGame
     private Game game;
     private WorldRenderer worldRenderer;
@@ -74,6 +75,9 @@ public class GamePanel extends JPanel {
         spriteRenderer.render(pixels, zBuffer, player);
 
         hudRenderer.render(frameGraphics, game);
+        if (game.getState() == GameState.PLAYING) {
+            threatIndicator.render(pixels, game); // on top of the gun so it is never hidden
+        }
 
         Graphics2D g = (Graphics2D) graphics;
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);

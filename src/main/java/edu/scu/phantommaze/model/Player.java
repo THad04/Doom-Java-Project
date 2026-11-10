@@ -78,10 +78,11 @@ public class Player {
     /**
      * Advances the player by one time step, turning and moving with collision.
      *
-     * @param dt  seconds elapsed
-     * @param map the map to collide with
+     * @param dt              seconds elapsed
+     * @param map             the map to collide with
+     * @param speedMultiplier 1 for normal speed, higher during the power-up
      */
-    public void update(double dt, GameMap map) {
+    public void update(double dt, GameMap map, double speedMultiplier) {
         // uses turn intent along with turn speed and time elapsed to change angle
         angle += turnIntent * Config.PLAYER_TURN_SPEED * dt;
 
@@ -106,8 +107,9 @@ public class Player {
             vx /= len; // ensures movement diagonal is the same speed as movement straight
             vy /= len;
         }
-        // mutliply vx and vy by movement speed and time since last frame
-        move(vx * Config.PLAYER_MOVE_SPEED * dt, vy * Config.PLAYER_MOVE_SPEED * dt, map);
+        // mutliply vx and vy by movement speed (boosted during the power-up) and time since last frame
+        double speed = Config.PLAYER_MOVE_SPEED * speedMultiplier;
+        move(vx * speed * dt, vy * speed * dt, map);
     }
 
     /**

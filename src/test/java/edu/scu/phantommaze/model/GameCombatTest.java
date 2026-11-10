@@ -239,6 +239,73 @@ class GameCombatTest {
         assertEquals(GameState.GAME_OVER, game.getState());
     }
 
+    @Test
+    void powerUpSpeedsUpThePlayerUntilItEnds() {
+        Game normal = new Game(ModelTestMaps.arena(), Difficulty.EASY);
+        normal.getPlayer().move(1, 0, normal.getMap());
+        Game powered = collectPowerUp();
+        assertEquals(normal.getPlayer().getX(), powered.getPlayer().getX(), 1e-9);
+
+        assertEquals(Config.PLAYER_MOVE_SPEED * 0.5, walkForward(normal, 0.5), 1e-9);
+        assertEquals(Config.PLAYER_MOVE_SPEED * Config.POWER_UP_SPEED_MULTIPLIER * 0.5,
+                walkForward(powered, 0.5), 1e-9);
+
+        powered.getPlayer().respawn(new Vector2(1.5, 2.5), 0);
+        powered.update(Difficulty.EASY.powerUpDuration);
+        assertFalse(powered.isPowerUpActive());
+        assertEquals(Config.PLAYER_MOVE_SPEED * 0.5, walkForward(powered, 0.5), 1e-9);
+    }
+
+    @Test
+    void sixthSenseUsesWalkingDistanceAndIgnoresFrightenedEnemies() {
+        Game open = new Game(ModelTestMaps.powerArena(), Difficulty.EASY);
+        Enemy near = activate(open, 0, 1, 3); // two steps from the player through the open room
+        open.update(0);
+        assertTrue(open.threatLevel(near) > 0);
+
+        GameMap walled = ModelTestMaps.powerArena();
+        for (int x = 1; x <= 10; x++) {
+            walled.setCell(x, 2, GameMap.WALL); // same spot, but only reachable the long way round
+        }
+        Game blocked = new Game(walled, Difficulty.EASY);
+        Enemy behindWall = activate(blocked, 0, 1, 3);
+        blocked.update(0);
+        assertEquals(0, blocked.threatLevel(behindWall));
+
+        open.getPlayer().move(1, 0, open.getMap());
+        open.update(0); // picks up the power-up, which frightens the enemy
+        assertTrue(near.isFrightened());
+        assertEquals(0, open.threatLevel(near));
+    }
+
+    @Test
+    void sixthSensePointsAtTheCornerAHiddenEnemyWillComeAround() {
+        GameMap map = ModelTestMaps.arena(); // player at (1, 1) looking east along row 1
+        for (int x = 1; x <= 11; x++) {
+            if (x != 4) {
+                map.setCell(x, 2, GameMap.WALL); // row 2 is a wall with one gap at column 4
+            }
+        }
+        Game game = new Game(map, Difficulty.NORMAL);
+        Enemy enemy = activate(game, 0, 4, 3); // below the wall, down-right of the player
+        game.update(0);
+
+        assertTrue(game.threatLevel(enemy) > 0);
+        assertFalse(game.isInPlainSight(enemy));
+        assertTrue(game.relativeAngle(enemy) > 0.5, "straight line goes through the wall");
+        assertEquals(0.0, game.threatAngle(enemy), 1e-9, "it will appear at (4, 1), straight ahead");
+    }
+
+    /** Walks forward for {@code seconds} and returns how far the player went. */
+    private static double walkForward(Game game, double seconds) {
+        Player player = game.getPlayer();
+        double startX = player.getX();
+        player.setIntents(1, 0, 0);
+        game.update(seconds);
+        player.setIntents(0, 0, 0);
+        return player.getX() - startX;
+    }
+
     private static Game collectPowerUp() {
         Game game = new Game(ModelTestMaps.powerArena(), Difficulty.EASY);
         game.getPlayer().move(1, 0, game.getMap());

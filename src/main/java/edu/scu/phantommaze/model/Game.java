@@ -118,7 +118,8 @@ public class Game {
         }
 
         graceTimer = Math.max(0, graceTimer - dt);
-        player.update(dt, map); // passes time step to player
+        double speedMultiplier = powerUpTimer > 0 ? Config.POWER_UP_SPEED_MULTIPLIER : 1.0;
+        player.update(dt, map, speedMultiplier); // passes time step to player
         weapons.update(dt);
         updatePowerUp(dt);
         pickUpPowerUp();
@@ -426,6 +427,69 @@ public class Game {
     public double relativeAngle(Enemy e) {
         double toEnemy = Math.atan2(e.getY() - player.getY(), e.getX() - player.getX());
         return Math.IEEEremainder(toEnemy - player.getAngle(), 2 * Math.PI);
+    }
+
+    /**
+     * How strongly the "sixth sense" should warn about an enemy. Only enemies that can hurt
+     * the player count (not frightened ones, not ones in the pen), measured by walking distance
+     * so an enemy on the other side of a wall does not set it off.
+     *
+     * @param e the enemy
+     * @return 0 (no warning) up to almost 1 (right next to the player)
+     */
+    public double threatLevel(Enemy e) {
+        if (!e.isShootable() || e.isFrightened()) {
+            return 0;
+        }
+        int steps = ai.walkingDistanceToPlayer(e);
+        if (steps > Config.SENSE_RADIUS) {
+            return 0;
+        }
+        return 1.0 - steps / (Config.SENSE_RADIUS + 1.0);
+    }
+
+    /**
+     * Which way the "sixth sense" should point for an enemy. If nothing blocks the view, that is
+     * straight at the enemy. Otherwise it follows the enemy's walk toward the player and points at
+     * the first spot the player can see - usually the corner the enemy will come around.
+     *
+     * @param e the enemy
+     * @return radians like {@link #relativeAngle}: 0 = straight ahead, positive = to the right
+     */
+    public double threatAngle(Enemy e) {
+        double px = player.getX();
+        double py = player.getY();
+        double tx = e.getX();
+        double ty = e.getY();
+        if (!hasClearPath(px, py, tx, ty)) {
+            int width = map.getWidth();
+            int x = e.getTileX();
+            int y = e.getTileY();
+            for (int i = 0; i < Config.SENSE_RADIUS; i++) { // warnings only reach this far anyway
+                int next = ai.stepTowardPlayer(x, y);
+                if (next == y * width + x) {
+                    break; // reached the player's tile
+                }
+                x = next % width;
+                y = next / width;
+                tx = x + 0.5;
+                ty = y + 0.5;
+                if (hasClearPath(px, py, tx, ty)) {
+                    break; // first spot on its route the player can see
+                }
+            }
+        }
+        double toTarget = Math.atan2(ty - py, tx - px);
+        return Math.IEEEremainder(toTarget - player.getAngle(), 2 * Math.PI);
+    }
+
+    /**
+     * @param e the enemy
+     * @return true if the enemy is on screen and no wall hides it, so no warning is needed
+     */
+    public boolean isInPlainSight(Enemy e) {
+        return Math.abs(relativeAngle(e)) <= Math.toRadians(Config.FOV_DEGREES / 2.0)
+                && hasClearPath(player.getX(), player.getY(), e.getX(), e.getY());
     }
 
     private void showMessage(String text) {

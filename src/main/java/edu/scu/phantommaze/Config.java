@@ -43,6 +43,8 @@ public class Config {
 
     /** Player movement speed in tiles per second. */
     public static final double PLAYER_MOVE_SPEED = 3.2;
+    /** Movement speed is multiplied by this while the shotgun power-up lasts, to chase fleeing enemies. */
+    public static final double POWER_UP_SPEED_MULTIPLIER = 1.5;
     /** Player turning speed (arrow keys) in radians per second. */
     public static final double PLAYER_TURN_SPEED = 2.4;
     /** Player collision radius in tiles. */
@@ -95,6 +97,11 @@ public class Config {
     public static final double GROWL_RANDOM_INTERVAL = 2.0;
     /** Doomguy's face glances toward enemies closer than this (in tiles). */
     public static final double FACE_ALERT_RADIUS = 6.0;
+    /**
+     * "Sixth sense": enemies this close (walking distance in tiles) that the player cannot see make
+     * the screen edge glow red on the side they will come from.
+     */
+    public static final int SENSE_RADIUS = 5;
 
     /** Size of one sprite pixel in tiles (an imp, 56 pixels tall, ends up 83% of a wall). */
     public static final double SPRITE_PIXEL_SIZE = 1.0 / 100.0;
