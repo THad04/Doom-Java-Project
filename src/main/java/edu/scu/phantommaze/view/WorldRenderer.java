@@ -14,7 +14,7 @@ import edu.scu.phantommaze.model.Player;
 public class WorldRenderer {
 
     private static final int W = Config.RENDER_WIDTH;
-    private static final int H = Config.RENDER_HEIGHT;
+    private static final int H = Config.VIEW_HEIGHT; // rows below this belong to the status bar
     private static final int TEX = Config.TEXTURE_SIZE;
 
     private final GameMap map;
@@ -55,7 +55,8 @@ public class WorldRenderer {
      * (1) shoot a ray into the map, (2) work out how tall the wall looks,
      * (3) pick a texture, (4) work out the fog, (5) paint ceiling, wall and floor.
      *
-     * @param pixels target RGB pixel buffer of size RENDER_WIDTH * RENDER_HEIGHT
+     * @param pixels target RGB pixel buffer of size RENDER_WIDTH * RENDER_HEIGHT; only the top
+     *               VIEW_HEIGHT rows are drawn
      * @param player the camera
      * @param zBuffer receives the perpendicular wall distance per screen column
      */
@@ -64,15 +65,16 @@ public class WorldRenderer {
 
         for (int x = 0; x < W; x++) {
             // 1. Shoot a ray through this column and find the wall it hits.
-            //    cameraX goes from -1 (left edge of the screen) to +1 (right edge).
-            double cameraX = 2.0 * x / W - 1.0;
+            //    cameraX goes from -1 (left edge of the screen) to +1 (right edge); the ray goes
+            //    through the middle of the column so sprites (which sample pixel centers) line up.
+            double cameraX = (2.0 * x + 1.0) / W - 1.0;
             double rayX = player.getDirX() + player.getPlaneX() * cameraX;
             double rayY = player.getDirY() + player.getPlaneY() * cameraX;
             raycaster.cast(player.getX(), player.getY(), rayX, rayY, hit);
             zBuffer[x] = hit.distance;
 
             // 2. Wall height on screen: close walls are tall, far walls are short.
-            int lineHeight = (int) (H / Math.max(hit.distance, 1e-4));
+            int lineHeight = (int) (Config.PROJECTION_SCALE / Math.max(hit.distance, 1e-4));
             int start = half - lineHeight / 2; // may be negative (wall taller than screen)
             int end = half + lineHeight / 2;
             int drawStart = Math.max(0, start); // clip to the screen

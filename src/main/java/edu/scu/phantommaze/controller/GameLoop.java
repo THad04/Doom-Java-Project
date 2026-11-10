@@ -5,45 +5,56 @@ import edu.scu.phantommaze.model.Game;
 import javax.swing.JComponent;
 import javax.swing.Timer;
 
-/**
- * The game loop. About 60 times a second it reads the keys, updates the game,
- * and repaints the screen. Runs on the Swing event thread.
- */
+/** Swing timer that reads input, updates the game, and repaints about 60 times a second. */
 public class GameLoop {
 
-    private static final double STEP = 1.0 / Config.TARGET_FPS;
-
-    private final Game game;
     private final InputController input;
     private final JComponent view;
     private final Timer timer;
+    private Game game;
+    private long lastTick;
 
     /**
-     * Creates the loop (not yet running).
+     * Creates a stopped loop.
      *
-     * @param game  the model to update
-     * @param input the input source
-     * @param view  the component to repaint after each tick
+     * @param input input source
+     * @param view  component to repaint
      */
-    public GameLoop(Game game, InputController input, JComponent view) {
-        this.game = game;
+    public GameLoop(InputController input, JComponent view) {
         this.input = input;
         this.view = view;
-        // calls code at a regular interval of every 16 ms (60 fps)
-        // whenever the timer fires, call tick()
         this.timer = new Timer(1000 / Config.TARGET_FPS, e -> tick());
-        this.timer.setCoalesce(true); // if computer falls behind merge them into one
+        this.timer.setCoalesce(true);
     }
 
-    /** Starts the loop. */
+    /**
+     * Selects the game this loop advances.
+     *
+     * @param game current game
+     */
+    public void setGame(Game game) {
+        this.game = game;
+    }
+
+    /** Starts or restarts the loop. */
     public void start() {
-        timer.start(); // called at the end of app.java
+        lastTick = System.nanoTime();
+        timer.start();
     }
 
-    /** One step of the game: read the keys, update the game, redraw. */
+    /** Stops the loop. */
+    public void stop() {
+        timer.stop();
+    }
+
     private void tick() {
-        input.applyTo(game.getPlayer()); // copy held keys into player intent
-        game.update(STEP); // advance simulation by 1/60 s
-        view.repaint(); // swing redraws the screen
+        long now = System.nanoTime();
+        double dt = Math.min(Config.MAX_TIME_STEP, (now - lastTick) / 1_000_000_000.0);
+        lastTick = now;
+        if (game != null) {
+            input.applyTo(game);
+            game.update(dt);
+        }
+        view.repaint();
     }
 }

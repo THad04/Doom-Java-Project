@@ -20,6 +20,12 @@ public class GameMap {
     public static final char WALL = '#';
     /** Character for the pen door. */
     public static final char DOOR = '-';
+    /** Character for a ghost pen tile (where enemies spawn). */
+    public static final char PEN = 'G';
+    /** Character for a power pellet: picking it up gives the shotgun and armor. */
+    public static final char POWER_UP = 'o';
+    /** Character for an empty floor tile. */
+    public static final char EMPTY = ' ';
 
     private final char[][] cells; // indexed [y][x] row then column
     private final int width; // columns
@@ -46,14 +52,14 @@ public class GameMap {
         for (int y = 0; y < height; y++) { // visit rows
             String line = lines.get(y);
             for (int x = 0; x < width; x++) { // visit columns
-                char c = x < line.length() ? line.charAt(x) : ' '; // set char as char at location until you pass
-                                                                   // length, then ' '
+                char c = x < line.length() ? line.charAt(x) : EMPTY; // set char as char at location until you pass
+                                                                     // length, then ' '
                 if (c == 'P') {
                     playerStart = new Vector2(x + 0.5, y + 0.5); // set player start
-                    c = ' '; // make location blank
-                } else if (c == 'G') { // remembers positions for ghosts
+                    c = EMPTY; // make location blank
+                } else if (c == PEN) { // remembers positions for ghosts
                     penTiles.add(new int[] { x, y });
-                } else if (c == '.' || c == 'o') { // iterates pellet count
+                } else if (c == '.' || c == POWER_UP) { // iterates pellet count
                     pelletCount++;
                 }
                 cells[y][x] = c; // mark locations of each char in 2d array
@@ -121,6 +127,20 @@ public class GameMap {
     }
 
     /**
+     * Changes one tile, e.g. to remove a pellet once it has been picked up. Ignored when out
+     * of bounds.
+     *
+     * @param x tile column
+     * @param y tile row
+     * @param c the new tile character
+     */
+    public void setCell(int x, int y, char c) {
+        if (x >= 0 && y >= 0 && x < width && y < height) {
+            cells[y][x] = c;
+        }
+    }
+
+    /**
      * Tells whether a tile blocks movement and rays (walls, the pen door, and
      * out-of-bounds).
      *
@@ -149,6 +169,30 @@ public class GameMap {
      */
     public List<int[]> getPenTiles() {
         return penTiles;
+    }
+
+    /**
+     * Finds the maze tile just outside the pen door, where enemies step out into the maze.
+     *
+     * @return {x, y} of that tile, or null if the map has no door with open floor next to it
+     */
+    public int[] findPenExit() {
+        int[] dx = { 0, -1, 0, 1 };
+        int[] dy = { -1, 0, 1, 0 };
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                if (cells[y][x] != DOOR) {
+                    continue;
+                }
+                for (int d = 0; d < 4; d++) {
+                    char next = getCell(x + dx[d], y + dy[d]);
+                    if (next != WALL && next != DOOR && next != PEN) {
+                        return new int[] { x + dx[d], y + dy[d] };
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
