@@ -13,7 +13,7 @@ Open the folder in IntelliJ IDEA as a Maven project and run `edu.scu.phantommaze
 - `M`: minimap
 - `Esc`: pause; click to resume or press `Q` for the main menu
 
-On macOS, mouse recentering may require enabling IntelliJ IDEA in System Settings → Privacy & Security → Accessibility. If it is not allowed, mouse turning still works until the pointer reaches the screen edge.
+While playing, the mouse pointer is hidden and held in the middle of the window. On macOS this uses CoreGraphics through the JNA library, so no Accessibility permission is needed; IntelliJ downloads JNA automatically from `pom.xml`.
 
 ## Gameplay
 - Four enemies: Cacodemon (direct chaser), Demon (ambusher), Lost Soul (flanker), and Imp (shy chaser).

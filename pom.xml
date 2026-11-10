@@ -18,6 +18,12 @@
     </properties>
 
     <dependencies>
+        <!-- Lets Java call macOS's CoreGraphics directly to keep the mouse centered (see CursorWarp). -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.14.0</version>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>

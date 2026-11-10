@@ -2,12 +2,10 @@ package edu.scu.phantommaze.controller;
 
 import edu.scu.phantommaze.Config;
 import edu.scu.phantommaze.model.Game;
-import java.awt.AWTException;
 import java.awt.Cursor;
 import java.awt.MouseInfo;
 import java.awt.Point;
 import java.awt.PointerInfo;
-import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
@@ -43,12 +41,10 @@ public class InputController {
         void focusLost();
     }
 
-    private static final int RECENTER_DISTANCE = 80;
-
     private final JComponent component;
     private final Actions actions;
     private final Cursor hiddenCursor;
-    private Robot robot;
+    private final CursorWarp cursorWarp = new CursorWarp();
     private boolean forward;
     private boolean back;
     private boolean left;
@@ -59,10 +55,7 @@ public class InputController {
     private boolean mouseFire;
     private boolean reloadRequested;
     private boolean captured;
-    private double pendingMouseX;
     private int lastScreenX;
-    private int centerX;
-    private int centerY;
     private double mouseSensitivity = Config.DEFAULT_MOUSE_SENSITIVITY;
 
     /**
@@ -76,11 +69,6 @@ public class InputController {
         this.actions = actions;
         this.hiddenCursor = Toolkit.getDefaultToolkit().createCustomCursor(
                 new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB), new Point(), "hidden");
-        try {
-            robot = new Robot();
-        } catch (AWTException | SecurityException e) {
-            robot = null;
-        }
         component.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -111,16 +99,6 @@ public class InputController {
                     mouseFire = false;
                 }
             }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                handleMouseMove(e.getXOnScreen());
-            }
-
-            @Override
-            public void mouseDragged(MouseEvent e) {
-                handleMouseMove(e.getXOnScreen());
-            }
         };
         component.addMouseListener(mouse);
         component.addMouseMotionListener(mouse);
@@ -147,15 +125,10 @@ public class InputController {
         if (!component.isShowing()) {
             return;
         }
-        Point center = new Point(component.getWidth() / 2, component.getHeight() / 2);
-        SwingUtilities.convertPointToScreen(center, component);
-        centerX = center.x;
-        centerY = center.y;
-        lastScreenX = centerX;
-        pendingMouseX = 0;
         captured = true;
         component.setCursor(hiddenCursor);
-        recenter();
+        cursorWarp.hideCursor();
+        lastScreenX = recenter();
         component.requestFocusInWindow();
     }
 
@@ -164,6 +137,7 @@ public class InputController {
         captured = false;
         clearHeldInput();
         component.setCursor(Cursor.getDefaultCursor());
+        cursorWarp.showCursor();
     }
 
     /**
@@ -174,9 +148,8 @@ public class InputController {
     public void applyTo(Game game) {
         game.getPlayer().setIntents(axis(forward, back), axis(right, left), axis(turnRight, turnLeft));
         if (captured) {
-            game.getPlayer().rotate(pendingMouseX * mouseSensitivity * Config.MOUSE_RADIANS_PER_PIXEL);
+            game.getPlayer().rotate(readMouseTurn() * mouseSensitivity * Config.MOUSE_RADIANS_PER_PIXEL);
         }
-        pendingMouseX = 0;
         game.setTriggerHeld(keyFire || mouseFire);
         if (reloadRequested) {
             game.requestReload();
@@ -212,28 +185,39 @@ public class InputController {
         }
     }
 
-    private void handleMouseMove(int screenX) {
-        if (!captured) {
-            return;
+    /**
+     * Measures how far the mouse moved sideways since the last frame, then puts the pointer back
+     * in the middle of the game. Reading the pointer's screen position every frame (instead of
+     * waiting for mouse events) works even if a fast swipe carried it outside the window.
+     *
+     * @return horizontal movement in screen pixels
+     */
+    private int readMouseTurn() {
+        PointerInfo pointer = MouseInfo.getPointerInfo();
+        if (pointer == null) {
+            return 0;
         }
-        pendingMouseX += screenX - lastScreenX;
-        lastScreenX = screenX;
-        if (Math.abs(screenX - centerX) > RECENTER_DISTANCE) {
-            recenter();
-        }
+        int dx = pointer.getLocation().x - lastScreenX;
+        lastScreenX = recenter();
+        return dx;
     }
 
-    private void recenter() {
-        if (robot == null) {
-            return;
+    /**
+     * Moves the pointer to the center of the game panel.
+     *
+     * @return the pointer's x position afterwards
+     */
+    private int recenter() {
+        if (component.isShowing()) {
+            Point center = new Point(component.getWidth() / 2, component.getHeight() / 2);
+            SwingUtilities.convertPointToScreen(center, component); // follows the window if it moved
+            cursorWarp.moveTo(center.x, center.y);
+            PointerInfo after = MouseInfo.getPointerInfo();
+            if (after != null) {
+                return after.getLocation().x;
+            }
         }
-        robot.mouseMove(centerX, centerY);
-        PointerInfo pointer = MouseInfo.getPointerInfo();
-        if (pointer == null || pointer.getLocation().x != centerX) {
-            robot = null; // macOS denied control of the pointer; use edge-limited mouse deltas.
-            return;
-        }
-        lastScreenX = centerX;
+        return lastScreenX;
     }
 
     private void clearHeldInput() {
@@ -246,7 +230,6 @@ public class InputController {
         keyFire = false;
         mouseFire = false;
         reloadRequested = false;
-        pendingMouseX = 0;
     }
 
     private static double axis(boolean positive, boolean negative) {
