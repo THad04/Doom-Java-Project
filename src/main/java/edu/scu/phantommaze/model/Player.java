@@ -45,12 +45,44 @@ public class Player {
     }
 
     /**
+     * Turns the player instantly (used by the mouse).
+     *
+     * @param radians how far to turn; positive turns right
+     */
+    public void rotate(double radians) {
+        angle += radians;
+    }
+
+    /**
+     * Puts the player back at a start position, standing still.
+     *
+     * @param start the position in tile coordinates
+     * @param angle the facing angle in radians
+     */
+    public void respawn(Vector2 start, double angle) {
+        this.x = start.x;
+        this.y = start.y;
+        this.angle = angle;
+        setIntents(0, 0, 0);
+    }
+
+    /**
+     * How hard the movement keys are pushed, used to bob the weapon while walking.
+     *
+     * @return 0 (standing still) to 1 (full speed)
+     */
+    public double getMoveIntensity() {
+        return Math.min(1.0, Math.hypot(forwardIntent, strafeIntent));
+    }
+
+    /**
      * Advances the player by one time step, turning and moving with collision.
      *
-     * @param dt  seconds elapsed
-     * @param map the map to collide with
+     * @param dt              seconds elapsed
+     * @param map             the map to collide with
+     * @param speedMultiplier 1 for normal speed, higher during the power-up
      */
-    public void update(double dt, GameMap map) {
+    public void update(double dt, GameMap map, double speedMultiplier) {
         // uses turn intent along with turn speed and time elapsed to change angle
         angle += turnIntent * Config.PLAYER_TURN_SPEED * dt;
 
@@ -59,7 +91,7 @@ public class Player {
         // East: 0 degrees = (1,0)
         // South: 90 degrees = (0, 1)
         // West: 180 degrees = (-1, 0)
-        // North: 240 degrees = (0, -1)
+        // North: 270 degrees = (0, -1)
         double dirX = getDirX(); // cos(0) = 1
         double dirY = getDirY(); // sin(0) = 0
         // Right-hand vector in screen coordinates (y points down).
@@ -75,8 +107,9 @@ public class Player {
             vx /= len; // ensures movement diagonal is the same speed as movement straight
             vy /= len;
         }
-        // mutliply vx and vy by movement speed and time since last frame
-        move(vx * Config.PLAYER_MOVE_SPEED * dt, vy * Config.PLAYER_MOVE_SPEED * dt, map);
+        // mutliply vx and vy by movement speed (boosted during the power-up) and time since last frame
+        double speed = Config.PLAYER_MOVE_SPEED * speedMultiplier;
+        move(vx * speed * dt, vy * speed * dt, map);
     }
 
     /**
