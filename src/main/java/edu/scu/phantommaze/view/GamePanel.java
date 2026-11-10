@@ -1,6 +1,7 @@
 package edu.scu.phantommaze.view;
 
 import edu.scu.phantommaze.Config;
+import edu.scu.phantommaze.model.Blast;
 import edu.scu.phantommaze.model.Enemy;
 import edu.scu.phantommaze.model.Game;
 import edu.scu.phantommaze.model.GameState;
@@ -24,6 +25,8 @@ public class GamePanel extends JPanel {
 
     /** Seconds before the power-up ends when frightened enemies start flashing white. */
     private static final double FLASH_WARNING_TIME = 2.0;
+    /** BFG explosions float this high (sprite pixels), around an enemy's middle. */
+    private static final double BLAST_HOVER = 16;
 
     private final BufferedImage frame =
             new BufferedImage(Config.RENDER_WIDTH, Config.RENDER_HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -32,10 +35,12 @@ public class GamePanel extends JPanel {
     private final Graphics2D frameGraphics = frame.createGraphics();
     private final EnemySprites enemySprites = new EnemySprites();
     private final Patch powerUpSprite = Assets.sprite("shota0");
+    private final Patch[] blastFrames = {
+        Assets.sprite("bfe2a0"), Assets.sprite("bfe2b0"), Assets.sprite("bfe2c0"), Assets.sprite("bfe2d0") };
     private final HudRenderer hudRenderer = new HudRenderer();
     private final MinimapRenderer minimapRenderer = new MinimapRenderer();
     private final ThreatIndicator threatIndicator = new ThreatIndicator();
-    private SpriteRenderer spriteRenderer; // sized for the game's enemies and pickups in setGame
+    private SpriteRenderer spriteRenderer; // sized for the game's enemies, pickups and explosions in setGame
     private Game game;
     private WorldRenderer worldRenderer;
     private boolean showMinimap = true;
@@ -55,7 +60,8 @@ public class GamePanel extends JPanel {
     public void setGame(Game game) {
         this.game = game;
         this.worldRenderer = new WorldRenderer(game.getMap());
-        this.spriteRenderer = new SpriteRenderer(game.getPowerUps().size() + game.getEnemies().size());
+        // Explosions last less than the BFG's fire delay, so there are never more than one per enemy.
+        this.spriteRenderer = new SpriteRenderer(game.getPowerUps().size() + 2 * game.getEnemies().size());
     }
 
     /** Shows or hides the minimap. */
@@ -88,11 +94,15 @@ public class GamePanel extends JPanel {
         }
     }
 
-    /** Hands every visible enemy and power-up to the sprite renderer. */
+    /** Hands every visible enemy, power-up and BFG explosion to the sprite renderer. */
     private void queueSprites(Player player) {
         spriteRenderer.clear();
         for (int[] p : game.getPowerUps()) {
             spriteRenderer.add(powerUpSprite, p[0] + 0.5, p[1] + 0.5, 0, SpriteRenderer.TINT_NONE, true);
+        }
+        for (Blast b : game.getBlasts()) {
+            int frame = Math.min(blastFrames.length - 1, (int) (b.getAge() / Config.BLAST_TIME * blastFrames.length));
+            spriteRenderer.add(blastFrames[frame], b.getX(), b.getY(), BLAST_HOVER, SpriteRenderer.TINT_NONE, true);
         }
         int frightenedTint = SpriteRenderer.TINT_FRIGHTENED;
         if (game.getPowerUpRemaining() < FLASH_WARNING_TIME && (int) (game.getTime() * 5) % 2 == 0) {

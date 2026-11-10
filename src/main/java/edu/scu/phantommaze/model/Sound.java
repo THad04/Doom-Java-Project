@@ -38,7 +38,13 @@ public enum Sound {
     /** Pain grunt for the cacodemon, demon and lost soul. */
     DEMON_PAIN("dsdmpain"),
     /** Pain grunt for the imp. */
-    IMP_PAIN("dspopain");
+    IMP_PAIN("dspopain"),
+    /** BFG charging up and firing. */
+    BFG("dsbfg"),
+    /** BFG blast hitting enemies. */
+    BFG_EXPLOSION("dsrxplod"),
+    /** Rampage mode starting: a burst of flame. */
+    RAMPAGE("dsflamst");
 
     /** File name without the {@code .wav} extension. */
     public final String fileName;

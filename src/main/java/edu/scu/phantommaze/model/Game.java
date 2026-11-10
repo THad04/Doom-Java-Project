@@ -40,6 +40,13 @@ public class Game {
     private double hitFreeze; // > 0 while the world is frozen after the player was caught
     private double graceTimer; // > 0 while the player just respawned and cannot be hurt
     private double powerUpTimer; // > 0 while the shotgun power-up (armor) lasts
+    private double powerUpTotal; // full length of the current power-up, for the armor percentage
+    private final Combo combo = new Combo();
+    private boolean rampage; // the BFG rampage earned by a full combo; lasts until the power-up ends
+    private double rampageTransition; // > 0 while flames swap the shotgun for the BFG
+    private double bfgCharge; // > 0 while the BFG charges; it blasts when this reaches 0
+    private final List<Blast> blasts = new ArrayList<>();
+    private final List<Blast> blastView = Collections.unmodifiableList(blasts);
     private boolean scatterMode = true; // Pac-Man's breaks: enemies roam to their corners
     private double modeTimer;
     private boolean triggerHeld;
@@ -123,6 +130,7 @@ public class Game {
         weapons.update(dt);
         updatePowerUp(dt);
         pickUpPowerUp();
+        updateRampage(dt);
         if (triggerHeld) {
             fire();
         }
@@ -141,6 +149,7 @@ public class Game {
         player.respawn(map.getPlayerStart(), START_ANGLE);
         weapons.reset();
         powerUpTimer = 0;
+        endRampage();
         triggerHeld = false;
         scatterMode = true;
         modeTimer = difficulty.scatterTime;
@@ -161,7 +170,7 @@ public class Game {
                 break;
             case DYING:
                 if (e.isDeathFinished()) {
-                    e.sendToPen(difficulty.respawnDelay);
+                    e.sendToPen(rampage ? 0 : difficulty.respawnDelay); // rampage needs targets
                     e.setFrightened(isPowerUpActive());
                 }
                 break;
@@ -184,6 +193,11 @@ public class Game {
             return;
         }
         Weapon weapon = weapons.getCurrent();
+        if (weapon == Weapon.BFG) {
+            sounds.play(Sound.BFG, 1.0, 0.0);
+            bfgCharge = Config.BFG_CHARGE_TIME; // the blast goes off in updateRampage
+            return;
+        }
         boolean shotgun = weapon == Weapon.SHOTGUN;
         sounds.play(shotgun ? Sound.SHOTGUN : Sound.PISTOL, 1.0, 0.0);
 
@@ -196,10 +210,35 @@ public class Game {
             }
         }
 
-        if (shotgun && weapons.getAmmo() == 0) { // out of shells: back to the pistol, armor stays
-            returnToPistol();
-        } else if (!shotgun && weapons.getAmmo() == 0) {
+        // Check the gun again: the kill above may have completed a combo and handed over the BFG.
+        if (weapons.getCurrent() == Weapon.SHOTGUN && weapons.getAmmo() == 0) {
+            returnToPistol(); // out of shells: back to the pistol, armor stays
+        } else if (weapons.getCurrent() == Weapon.PISTOL && weapons.getAmmo() == 0) {
             requestReload(); // empty clip reloads on its own
+        }
+    }
+
+    /**
+     * The BFG's blast: like Doom's BFG spray, it kills every enemy in a wide cone in front of
+     * the player that is not hidden behind a wall.
+     */
+    private void bfgBlast() {
+        double halfCone = Math.toRadians(Config.BFG_CONE_DEGREES / 2.0);
+        boolean hit = false;
+        for (int i = 0; i < enemies.size(); i++) {
+            Enemy e = enemies.get(i);
+            if (!e.isShootable()
+                    || Math.abs(relativeAngle(e)) > halfCone
+                    || Math.hypot(e.getX() - player.getX(), e.getY() - player.getY()) > Config.HITSCAN_RANGE
+                    || !hasClearPath(player.getX(), player.getY(), e.getX(), e.getY())) {
+                continue;
+            }
+            blasts.add(new Blast(e.getX(), e.getY()));
+            eliminate(e);
+            hit = true;
+        }
+        if (hit) {
+            sounds.play(Sound.BFG_EXPLOSION, 1.0, 0.0);
         }
     }
 
@@ -283,6 +322,64 @@ public class Game {
         sounds.play(e.getType().deathSound, volumeFor(e), panFor(e));
         e.kill();
         kills++;
+        if (powerUpTimer > 0 && !rampage) {
+            if (combo.recordKill(e, enemies.size())) {
+                startRampage();
+            } else {
+                showMessage("COMBO " + combo.getCount() + "/" + enemies.size());
+            }
+        }
+    }
+
+    /**
+     * Every enemy was killed in one quick streak: the shotgun burns away for the BFG, the power-up
+     * gets bonus time with full armor, and enemies waiting in the pen come straight back out
+     * (still frightened) so there is something to shoot.
+     */
+    private void startRampage() {
+        rampage = true;
+        rampageTransition = Config.RAMPAGE_TRANSITION_TIME;
+        powerUpTimer += Config.RAMPAGE_BONUS_TIME;
+        powerUpTotal = powerUpTimer;
+        weapons.equipBfg(Config.RAMPAGE_TRANSITION_TIME);
+        sounds.play(Sound.RAMPAGE, 1.0, 0.0);
+        showMessage("YOU GOT THE BFG!"); // the big RAMPAGE title is drawn by the HUD
+        for (int i = 0; i < enemies.size(); i++) {
+            Enemy e = enemies.get(i);
+            if (e.getState() == Enemy.State.IN_PEN) {
+                e.sendToPen(0);
+                e.setFrightened(true);
+            }
+        }
+    }
+
+    /** Runs the combo clock, the flame transition, the BFG charge, and the fading explosions. */
+    private void updateRampage(double dt) {
+        combo.update(dt);
+        rampageTransition = Math.max(0, rampageTransition - dt);
+        if (bfgCharge > 0) {
+            bfgCharge -= dt;
+            if (bfgCharge <= 0) {
+                bfgCharge = 0;
+                bfgBlast();
+            }
+        }
+        for (int i = blasts.size() - 1; i >= 0; i--) {
+            Blast b = blasts.get(i);
+            b.tick(dt);
+            if (b.getAge() >= Config.BLAST_TIME) {
+                blasts.remove(i);
+            }
+        }
+    }
+
+    /** Clears the combo and rampage, e.g. when the power-up ends or a new round starts. */
+    private void endRampage() {
+        rampage = false;
+        rampageTransition = 0;
+        bfgCharge = 0;
+        combo.reset();
+        blasts.clear();
     }
 
     /** Picking up a power pellet gives the shotgun, a fresh box of shells, and full armor. */
@@ -301,10 +398,17 @@ public class Game {
             }
         }
 
-        powerUpTimer = difficulty.powerUpDuration;
-        weapons.equipShotgun();
+        if (rampage) { // keep the BFG; just top the time back up
+            powerUpTimer = Math.max(powerUpTimer, difficulty.powerUpDuration);
+            showMessage("RAMPAGE REFUELED!");
+        } else {
+            powerUpTimer = difficulty.powerUpDuration;
+            weapons.equipShotgun();
+            combo.reset(); // every power-up gets its own chance at a combo
+            showMessage("YOU GOT THE SHOTGUN!");
+        }
+        powerUpTotal = powerUpTimer;
         sounds.play(Sound.POWER_UP, 1.0, 0.0);
-        showMessage("YOU GOT THE SHOTGUN!");
         pickupFlash = PICKUP_FLASH_TIME;
         for (int i = 0; i < enemies.size(); i++) {
             Enemy e = enemies.get(i);
@@ -327,9 +431,10 @@ public class Game {
             return;
         }
         powerUpTimer = 0;
-        if (weapons.getCurrent() == Weapon.SHOTGUN) {
+        if (weapons.getCurrent() != Weapon.PISTOL) {
             returnToPistol();
         }
+        endRampage();
         for (int i = 0; i < enemies.size(); i++) {
             Enemy e = enemies.get(i);
             e.setFrightened(false);
@@ -590,7 +695,7 @@ public class Game {
         if (powerUpTimer <= 0) {
             return 0;
         }
-        return (int) Math.ceil(powerUpTimer / difficulty.powerUpDuration * 100.0);
+        return (int) Math.ceil(powerUpTimer / powerUpTotal * 100.0);
     }
 
     /** @return true while the shotgun power-up (armor) is active */
@@ -601,6 +706,26 @@ public class Game {
     /** @return seconds left on the power-up, 0 if none */
     public double getPowerUpRemaining() {
         return powerUpTimer;
+    }
+
+    /** @return the kill streak of the current power-up */
+    public Combo getCombo() {
+        return combo;
+    }
+
+    /** @return true during BFG rampage mode */
+    public boolean isRampageActive() {
+        return rampage;
+    }
+
+    /** @return how far the flame transition still has to go: 1 when rampage starts, 0 when done */
+    public double getRampageTransition() {
+        return rampageTransition / Config.RAMPAGE_TRANSITION_TIME;
+    }
+
+    /** @return BFG explosions currently visible (read-only) */
+    public List<Blast> getBlasts() {
+        return blastView;
     }
 
     /** @return true if touching an enemy does no harm right now */

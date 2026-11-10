@@ -9,7 +9,10 @@ import edu.scu.phantommaze.model.Weapons;
 import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Composite;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.image.BufferedImage;
 
@@ -38,6 +41,25 @@ public class HudRenderer {
     private static final double BOB_AMOUNT = 10;
     /** Seconds Doomguy keeps looking one way before glancing again. */
     private static final double GLANCE_TIME = 0.5;
+    /** How far (Doom pixels) a gun sinks out of view while the flames swap shotgun for BFG. */
+    private static final int SWAP_DROP = 130;
+    /** Bottom of the 3D view in Doom coordinates (where the flames stand). */
+    private static final int VIEW_BOTTOM = Config.VIEW_HEIGHT / S;
+    /** Flames across the screen during the rampage transition. */
+    private static final int TRANSITION_FLAMES = 7;
+    /** Animation speed of the flames in frames per second. */
+    private static final double FLAME_FPS = 15;
+    /** Combo timer bar size in Doom pixels. */
+    private static final int COMBO_BAR_WIDTH = 80;
+    private static final int COMBO_BAR_HEIGHT = 3;
+    /**
+     * Pause / game over hints use a plain bold font: Freedoom's small font draws Q and O as
+     * near-identical diamonds, which made "Q - MAIN MENU" unreadable.
+     */
+    private static final Font HINT_FONT = new Font(Font.SANS_SERIF, Font.BOLD, 20);
+    private static final Color HINT_TEXT = new Color(230, 220, 200);
+    private static final String[] PAUSE_HINTS = { "Click to resume", "Press Q for the main menu" };
+    private static final String[] GAME_OVER_HINTS = { "Press Enter for the main menu" };
 
     /** Alpha levels the red / gold screen flashes are rounded to, so none are created per frame. */
     private static final int TINT_STEPS = 64;
@@ -54,6 +76,10 @@ public class HudRenderer {
     private static final Color PICKUP_GOLD = new Color(215, 186, 69);
     private static final Color CROSSHAIR = new Color(255, 255, 255, 160);
     private static final Color DIM = new Color(0, 0, 0, 150);
+    private static final Color OVERLAY_BAND = new Color(0, 0, 0, 200);
+    private static final Color RAMPAGE_ORANGE = new Color(255, 110, 0);
+    private static final Color COMBO_BAR = new Color(215, 186, 69);
+    private static final Color COMBO_BAR_BACK = new Color(0, 0, 0, 160);
 
     private final Patch statusBar = blankUnusedPanels(Assets.graphic("stbar"));
     private final AlphaComposite[] tintComposites = new AlphaComposite[TINT_STEPS]; // alpha 0..1, reused
@@ -65,6 +91,7 @@ public class HudRenderer {
     private final Patch[] ouchFaces = new Patch[5];
     private final Patch deadFace = Assets.graphic("stfdead0");
     private final Patch godFace = Assets.graphic("stfgod0");
+    private final Patch[] evilFaces = new Patch[5]; // rampage grin, by pain level
     private final Patch pistolIdle = Assets.sprite("pisga0");
     private final Patch pistolFire1 = Assets.sprite("pisgb0");
     private final Patch pistolFire2 = Assets.sprite("pisgc0");
@@ -75,6 +102,10 @@ public class HudRenderer {
     private final Patch shotgunPump3 = Assets.sprite("shtgd0");
     private final Patch shotgunFlash1 = Assets.sprite("shtfa0");
     private final Patch shotgunFlash2 = Assets.sprite("shtfb0");
+    private final Patch[] bfg = { Assets.sprite("bfgga0"), Assets.sprite("bfggb0"), Assets.sprite("bfggc0") };
+    private final Patch bfgFlash1 = Assets.sprite("bfgfa0");
+    private final Patch bfgFlash2 = Assets.sprite("bfgfb0");
+    private final Patch[] flames = new Patch[8];
 
     /** Loads the HUD pictures. */
     public HudRenderer() {
@@ -91,6 +122,10 @@ public class HudRenderer {
             lookLeftFaces[pain] = Assets.graphic("stftl" + pain + "0");
             lookRightFaces[pain] = Assets.graphic("stftr" + pain + "0");
             ouchFaces[pain] = Assets.graphic("stfouch" + pain);
+            evilFaces[pain] = Assets.graphic("stfevl" + pain);
+        }
+        for (int i = 0; i < flames.length; i++) {
+            flames[i] = Assets.sprite("fire" + (char) ('a' + i) + "0");
         }
     }
 
@@ -104,6 +139,7 @@ public class HudRenderer {
         Shape oldClip = g.getClip();
         g.setClip(0, 0, Config.RENDER_WIDTH, Config.VIEW_HEIGHT); // keep the gun out of the status bar
         drawWeapon(g, game);
+        drawRampageFlames(g, game);
         drawCrosshair(g);
         drawScreenTint(g, game);
         g.setClip(oldClip);
@@ -113,6 +149,10 @@ public class HudRenderer {
         String message = game.getMessage();
         if (message != null) {
             DoomFont.draw(g, message, 2 * S, 2 * S, S);
+        }
+        drawComboBar(g, game);
+        if (game.getRampageTransition() > 0) {
+            DoomFont.drawCentered(g, "RAMPAGE!", Config.RENDER_WIDTH / 2, Config.VIEW_HEIGHT / 4, 5);
         }
         drawOverlay(g, game);
     }
@@ -132,6 +172,21 @@ public class HudRenderer {
                 gun = pistolFire1;
             } else {
                 gun = pistolIdle;
+            }
+        } else if (weapons.getCurrent() == Weapon.BFG) {
+            double fired = t - Config.BFG_CHARGE_TIME; // seconds since the blast went off
+            if (t < Config.BFG_CHARGE_TIME) {
+                gun = bfg[0]; // charging (the sound plays meanwhile)
+            } else if (fired < 0.15) {
+                gun = bfg[1];
+                flash = bfgFlash1;
+            } else if (fired < 0.3) {
+                gun = bfg[1];
+                flash = bfgFlash2;
+            } else if (fired < 0.5) {
+                gun = bfg[2];
+            } else {
+                gun = bfg[0];
             }
         } else {
             gun = shotgunIdle;
@@ -160,6 +215,17 @@ public class HudRenderer {
         if (weapons.isReloading()) { // drop the pistol out of view and bring it back up
             sy += RELOAD_DROP * Math.sin(weapons.getReloadProgress() * Math.PI);
         }
+        double transition = game.getRampageTransition(); // 1 -> 0 while the flames swap the guns
+        if (transition > 0) {
+            double progress = 1.0 - transition;
+            if (progress < 0.5) { // first half: the shotgun sinks into the flames
+                gun = shotgunIdle;
+                flash = null;
+                sy += SWAP_DROP * progress * 2;
+            } else { // second half: the BFG rises out of them
+                sy += SWAP_DROP * (1.0 - progress) * 2;
+            }
+        }
         if (flash != null) {
             drawPatch(g, flash, sx, sy);
         }
@@ -183,7 +249,7 @@ public class HudRenderer {
         g.fillRect(cx, cy + 2, 1, 4);
     }
 
-    /** Red after being hit, gold after a pickup. */
+    /** Red after being hit, gold after a pickup, a pulsing orange glow during rampage. */
     private void drawScreenTint(Graphics2D g, Game game) {
         double hurt = game.getHurtAmount();
         double pickup = game.getPickupFlash();
@@ -191,7 +257,51 @@ public class HudRenderer {
             fillTinted(g, HURT_RED, (float) (0.15 + 0.4 * hurt));
         } else if (pickup > 0) {
             fillTinted(g, PICKUP_GOLD, (float) (0.35 * pickup));
+        } else if (game.getRampageTransition() > 0) {
+            fillTinted(g, RAMPAGE_ORANGE, (float) (0.45 * Math.sin(game.getRampageTransition() * Math.PI)));
+        } else if (game.isRampageActive()) {
+            fillTinted(g, RAMPAGE_ORANGE, (float) (0.08 + 0.05 * Math.sin(game.getTime() * 6)));
         }
+    }
+
+    /**
+     * Fire from Freedoom's flame animation. When rampage starts, a wall of flames rises across
+     * the bottom of the screen and burns away the shotgun; afterwards smaller flames keep
+     * licking up from the bottom corners until the rampage ends.
+     */
+    private void drawRampageFlames(Graphics2D g, Game game) {
+        if (!game.isRampageActive()) {
+            return;
+        }
+        int firstFrame = (int) (game.getTime() * FLAME_FPS);
+        double transition = game.getRampageTransition();
+        if (transition > 0) {
+            double height = Math.sin(transition * Math.PI); // rises, peaks halfway, then sinks
+            double spacing = (double) Config.RENDER_WIDTH / S / (TRANSITION_FLAMES - 1);
+            double baseline = VIEW_BOTTOM + (1.0 - height) * 100;
+            for (int i = 0; i < TRANSITION_FLAMES; i++) {
+                Patch flame = flames[(firstFrame + i * 3) % flames.length];
+                drawPatch(g, flame, i * spacing, baseline);
+            }
+        } else {
+            double sink = 45; // only the tips show
+            drawPatch(g, flames[firstFrame % flames.length], 8, VIEW_BOTTOM + sink);
+            drawPatch(g, flames[(firstFrame + 4) % flames.length], Config.RENDER_WIDTH / S - 8, VIEW_BOTTOM + sink);
+        }
+    }
+
+    /** A shrinking bar under the COMBO message: time left to make the next kill. */
+    private void drawComboBar(Graphics2D g, Game game) {
+        double left = game.getCombo().getTimeLeftFraction();
+        if (left <= 0 || game.isRampageActive()) {
+            return;
+        }
+        int x = 2 * S;
+        int y = (2 + DoomFont.lineHeight() + 1) * S;
+        g.setColor(COMBO_BAR_BACK);
+        g.fillRect(x, y, COMBO_BAR_WIDTH * S, COMBO_BAR_HEIGHT * S);
+        g.setColor(COMBO_BAR);
+        g.fillRect(x, y, (int) (COMBO_BAR_WIDTH * S * left), COMBO_BAR_HEIGHT * S);
     }
 
     private void fillTinted(Graphics2D g, Color color, float alpha) {
@@ -205,7 +315,9 @@ public class HudRenderer {
 
     private void drawStatusBar(Graphics2D g, Game game) {
         drawPatch(g, statusBar, 0, BAR_Y);
-        drawNumber(g, game.getWeapons().getAmmo(), AMMO_RIGHT);
+        if (game.getWeapons().getCurrent() != Weapon.BFG) { // the BFG never runs out: no number
+            drawNumber(g, game.getWeapons().getAmmo(), AMMO_RIGHT);
+        }
         drawNumber(g, game.getHealthPercent(), HEALTH_RIGHT);
         drawPatch(g, percent, HEALTH_RIGHT, NUMBER_Y);
         drawNumber(g, game.getArmorPercent(), ARMOR_RIGHT);
@@ -246,8 +358,8 @@ public class HudRenderer {
     }
 
     /**
-     * Doomguy's face: bloodier as health drops, grinning while invincible, looking toward
-     * a nearby enemy, wincing when hit, and dead at the end.
+     * Doomguy's face: bloodier as health drops, an evil grin during rampage, glowing eyes while
+     * invincible, looking toward a nearby enemy, wincing when hit, and dead at the end.
      */
     private Patch chooseFace(Game game) {
         int health = game.getHealthPercent();
@@ -257,6 +369,9 @@ public class HudRenderer {
         }
         if (game.isPlayerHurt()) {
             return ouchFaces[pain];
+        }
+        if (game.isRampageActive()) {
+            return evilFaces[pain];
         }
         if (game.isPowerUpActive()) {
             return godFace;
@@ -295,21 +410,39 @@ public class HudRenderer {
 
     private void drawOverlay(Graphics2D g, Game game) {
         String title;
-        String hint;
+        String[] hints;
         if (game.getState() == GameState.PAUSED) {
             title = "PAUSED";
-            hint = "CLICK TO RESUME   Q - MAIN MENU";
+            hints = PAUSE_HINTS;
         } else if (game.getState() == GameState.GAME_OVER) {
             title = "GAME OVER";
-            hint = "PRESS ENTER FOR THE MAIN MENU";
+            hints = GAME_OVER_HINTS;
         } else {
             return;
         }
+        int titleScale = 4;
+        int titleHeight = DoomFont.lineHeight() * titleScale;
+        Font oldFont = g.getFont();
+        g.setFont(HINT_FONT);
+        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+        FontMetrics metrics = g.getFontMetrics();
+        int hintLine = metrics.getHeight();
+        int gap = hintLine / 2;
+        int height = titleHeight + gap + hints.length * hintLine;
+        int top = (Config.VIEW_HEIGHT - height) / 2;
+        int padding = hintLine;
         g.setColor(DIM);
         g.fillRect(0, 0, Config.RENDER_WIDTH, Config.VIEW_HEIGHT);
+        g.setColor(OVERLAY_BAND); // a darker band so the text stands out from the walls
+        g.fillRect(0, top - padding, Config.RENDER_WIDTH, height + 2 * padding);
         int centerX = Config.RENDER_WIDTH / 2;
-        int y = Config.VIEW_HEIGHT / 2 - DoomFont.lineHeight() * 4;
-        DoomFont.drawCentered(g, title, centerX, y, 4);
-        DoomFont.drawCentered(g, hint, centerX, y + DoomFont.lineHeight() * 6, S);
+        DoomFont.drawCentered(g, title, centerX, top, titleScale);
+        g.setColor(HINT_TEXT);
+        int baseline = top + titleHeight + gap + metrics.getAscent();
+        for (String hint : hints) {
+            g.drawString(hint, centerX - metrics.stringWidth(hint) / 2, baseline);
+            baseline += hintLine;
+        }
+        g.setFont(oldFont);
     }
 }

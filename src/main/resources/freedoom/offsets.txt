@@ -222,3 +222,26 @@ trooj0 23 58
 trook0 23 50
 trool0 21 39
 troom0 29 22
+# Rampage mode (BFG, archvile fire, BFG explosions, evil grin)
+stfevl0 -5 -2
+stfevl1 -5 -2
+stfevl2 -5 -2
+stfevl3 -5 -2
+stfevl4 -5 -2
+firea0 21 54
+fireb0 23 61
+firec0 23 78
+fired0 23 84
+firee0 24 86
+firef0 25 90
+fireg0 25 92
+fireh0 26 95
+bfgga0 -96 -108
+bfggb0 -96 -108
+bfggc0 -88 -108
+bfgfa0 -88 -90
+bfgfb0 -88 -88
+bfe2a0 33 28
+bfe2b0 34 33
+bfe2c0 32 32
+bfe2d0 31 31

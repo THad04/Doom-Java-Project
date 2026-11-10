@@ -83,6 +83,21 @@ public class Config {
      */
     public static final double HITSCAN_RANGE = 32.0;
 
+    /** Seconds allowed between two kills of a power-up combo (killing all 4 enemies starts rampage). */
+    public static final double COMBO_WINDOW = 4.0;
+    /** Seconds rampage mode adds to the power-up (armor refills to 100% of the new total). */
+    public static final double RAMPAGE_BONUS_TIME = 10.0;
+    /** Seconds of the flame transition when rampage starts; the BFG cannot fire yet. */
+    public static final double RAMPAGE_TRANSITION_TIME = 1.0;
+    /** Seconds the BFG charges after pulling the trigger before the blast goes off. */
+    public static final double BFG_CHARGE_TIME = 0.6;
+    /** Minimum seconds from one BFG shot to the next (includes the charge). */
+    public static final double BFG_FIRE_DELAY = 1.2;
+    /** Width of the BFG's killing cone in degrees, like Doom's BFG spray. */
+    public static final double BFG_CONE_DEGREES = 90.0;
+    /** Seconds a BFG explosion stays visible. */
+    public static final double BLAST_TIME = 0.5;
+
     /** Distance in tiles between the player and an enemy that counts as being caught. */
     public static final double CATCH_DISTANCE = 0.55;
     /** Seconds an enemy's death animation plays before it reappears in the pen. */

@@ -116,6 +116,7 @@ public class MenuPanel extends JPanel {
             "Left click / Space  shoot      R  reload      M  minimap",
             "Esc  pause (click to resume, Q for this menu)",
             "Grab a corner power-up for the shotgun and armor: enemies flee, one shell kills.",
+            "Kill all 4 within 4 seconds of each other for RAMPAGE mode and the BFG.",
         };
         for (String line : controls) {
             add(center(label(line, BODY, DIM_TEXT)));

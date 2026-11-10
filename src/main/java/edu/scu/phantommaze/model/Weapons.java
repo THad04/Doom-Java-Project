@@ -41,7 +41,9 @@ public class Weapons {
         if (cooldown > 0) {
             return false;
         }
-        if (current == Weapon.SHOTGUN) {
+        if (current == Weapon.BFG) {
+            cooldown = Config.BFG_FIRE_DELAY; // unlimited ammo
+        } else if (current == Weapon.SHOTGUN) {
             if (shells <= 0) {
                 return false;
             }
@@ -79,7 +81,20 @@ public class Weapons {
         timeSinceShot = Double.MAX_VALUE;
     }
 
-    /** Puts the shotgun away (any shells left are lost) and goes back to the pistol. */
+    /**
+     * Switches to the BFG for rampage mode. It cannot fire until the flame transition is over.
+     *
+     * @param readyIn seconds until the first shot is allowed
+     */
+    public void equipBfg(double readyIn) {
+        current = Weapon.BFG;
+        shells = 0;
+        reloadTimer = 0;
+        cooldown = readyIn;
+        timeSinceShot = Double.MAX_VALUE;
+    }
+
+    /** Puts the shotgun or BFG away (any shells left are lost) and goes back to the pistol. */
     public void equipPistol() {
         current = Weapon.PISTOL;
         shells = 0;
@@ -104,12 +119,16 @@ public class Weapons {
     }
 
     /**
-     * Ammo for the held gun: bullets in the pistol clip, or shotgun shells.
+     * Ammo for the held gun: bullets in the pistol clip, or shotgun shells. The BFG has unlimited
+     * ammo, so the status bar leaves the number blank for it (like Doom's fist and chainsaw).
      *
-     * @return the ammo count shown on the status bar
+     * @return the ammo count shown on the status bar (0 for the BFG)
      */
     public int getAmmo() {
-        return current == Weapon.PISTOL ? pistolClip : shells;
+        if (current == Weapon.PISTOL) {
+            return pistolClip;
+        }
+        return current == Weapon.SHOTGUN ? shells : 0;
     }
 
     /**

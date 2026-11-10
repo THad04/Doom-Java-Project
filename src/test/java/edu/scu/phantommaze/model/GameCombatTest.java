@@ -296,6 +296,70 @@ class GameCombatTest {
         assertEquals(0.0, game.threatAngle(enemy), 1e-9, "it will appear at (4, 1), straight ahead");
     }
 
+    @Test
+    void killingAllFourInOneStreakStartsRampageWithBonusTimeAndReleasesThePen() {
+        Game game = collectPowerUp();
+        double before = game.getPowerUpRemaining();
+
+        earnRampage(game);
+
+        assertTrue(game.isRampageActive());
+        assertEquals(Weapon.BFG, game.getWeapons().getCurrent());
+        assertEquals(100, game.getArmorPercent());
+        double streakTime = 3 * Config.SHOTGUN_FIRE_DELAY;
+        assertEquals(before - streakTime + Config.RAMPAGE_BONUS_TIME, game.getPowerUpRemaining(), 1e-9);
+
+        game.update(Config.ENEMY_DEATH_TIME); // the last kill finishes dying
+        game.update(0.01);
+        for (Enemy e : game.getEnemies()) {
+            assertTrue(e.isShootable(), e.getType() + " should be on its way out of the pen");
+            assertTrue(e.isFrightened());
+        }
+    }
+
+    @Test
+    void comboBreaksWhenTooSlowAndIgnoresTheSameEnemyTwice() {
+        Game game = collectPowerUp();
+        killInFront(game, 0);
+        game.update(Config.COMBO_WINDOW + 0.1);
+        assertEquals(0, game.getCombo().getCount(), "the streak timed out");
+
+        killInFront(game, 1);
+        game.update(Config.SHOTGUN_FIRE_DELAY);
+        killInFront(game, 1); // same enemy again: does not count
+        for (int i = 2; i < 4; i++) {
+            game.update(Config.SHOTGUN_FIRE_DELAY);
+            killInFront(game, i);
+        }
+
+        assertEquals(3, game.getCombo().getCount());
+        assertFalse(game.isRampageActive());
+        assertEquals(Weapon.SHOTGUN, game.getWeapons().getCurrent());
+    }
+
+    @Test
+    void bfgBlastKillsEveryVisibleEnemyInTheConeOnly() {
+        Game game = collectPowerUp(); // player at (2.5, 1.5) looking east
+        earnRampage(game);
+        game.update(Config.RAMPAGE_TRANSITION_TIME);
+        game.getMap().setCell(8, 1, GameMap.WALL);
+
+        shoot(game);
+        game.update(Config.BFG_CHARGE_TIME - 0.05); // still charging
+        Enemy ahead = activate(game, 0, 6, 1);
+        Enemy aside = activate(game, 1, 2, 4); // about 100 degrees to the right: outside the cone
+        Enemy behind = activate(game, 2, 1, 1);
+        Enemy hidden = activate(game, 3, 9, 1); // straight ahead, but behind the wall at (8, 1)
+        assertTrue(ahead.isShootable(), "nothing fires before the charge is done");
+        game.update(0.1);
+
+        assertFalse(ahead.isShootable());
+        assertTrue(aside.isShootable());
+        assertTrue(behind.isShootable());
+        assertTrue(hidden.isShootable());
+        assertEquals(1, game.getBlasts().size());
+    }
+
     /** Walks forward for {@code seconds} and returns how far the player went. */
     private static double walkForward(Game game, double seconds) {
         Player player = game.getPlayer();
@@ -304,6 +368,23 @@ class GameCombatTest {
         game.update(seconds);
         player.setIntents(0, 0, 0);
         return player.getX() - startX;
+    }
+
+    /** Kills all four enemies one shotgun shell apart, completing the combo. */
+    private static void earnRampage(Game game) {
+        for (int i = 0; i < 4; i++) {
+            if (i > 0) {
+                game.update(Config.SHOTGUN_FIRE_DELAY);
+            }
+            killInFront(game, i);
+        }
+    }
+
+    /** Puts an enemy right in front of the player and shoots it with the shotgun. */
+    private static void killInFront(Game game, int index) {
+        Enemy enemy = activate(game, index, 3, 1);
+        shoot(game);
+        assertEquals(Enemy.State.DYING, enemy.getState());
     }
 
     private static Game collectPowerUp() {
