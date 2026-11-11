@@ -8,6 +8,9 @@ import java.io.InputStream;
 import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.RejectedExecutionException;
 import javax.sound.sampled.AudioFormat;
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -33,6 +36,13 @@ public class SoundPlayer implements SoundListener {
 
     private final Map<Sound, Clip[]> clips = new EnumMap<>(Sound.class);
 
+    /** Clip calls can block on the OS audio layer, so they run here instead of on the game thread. */
+    private final ExecutorService audioThread = Executors.newSingleThreadExecutor(r -> {
+        Thread t = new Thread(r, "audio");
+        t.setDaemon(true); // never keeps the game open after the window closes
+        return t;
+    });
+
     /** Loads every sound. Problems are reported once and the game continues without that sound. */
     public SoundPlayer() {
         for (Sound sound : Sound.values()) {
@@ -47,6 +57,18 @@ public class SoundPlayer implements SoundListener {
 
     @Override
     public void play(Sound sound, double volume, double pan) {
+        if (!clips.containsKey(sound) || volume <= 0) {
+            return;
+        }
+        try {
+            audioThread.execute(() -> playNow(sound, volume, pan));
+        } catch (RejectedExecutionException e) {
+            // shutting down: no sound
+        }
+    }
+
+    /** Does the actual (possibly slow) Clip work; only ever called on the audio thread. */
+    private void playNow(Sound sound, double volume, double pan) {
         Clip[] copies = clips.get(sound);
         if (copies == null || volume <= 0) {
             return;
