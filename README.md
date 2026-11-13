@@ -51,5 +51,7 @@ While playing, the mouse pointer is hidden and held in the middle of the window.
 ## Documentation
 Generated Javadoc is in `docs/javadoc`; open `docs/javadoc/index.html` in a browser. After changing code comments, regenerate it in IntelliJ with **Tools → Generate JavaDoc…** (whole project, output `docs/javadoc`, visibility **package**).
 
+UML diagrams are in `docs/uml`: [class diagram](docs/uml/class-diagram.png), [sequence diagram](docs/uml/sequence-diagram.svg), and [state diagram](docs/uml/state-diagram.png).
+
 ## Assets
 Sprites, HUD graphics, font, and sounds are from [Freedoom](https://freedoom.github.io/). Their license and credits are in `src/main/resources/freedoom/COPYING.adoc` and `src/main/resources/freedoom/CREDITS`.
