@@ -1,0 +1,118 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1880" height="1264" viewBox="0 0 1880 1264">
+<defs>
+  <marker id="solid" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8 z" fill="#333"/></marker>
+  <marker id="open" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto"><path d="M0,0 L10,4 L0,8" fill="none" stroke="#333"/></marker>
+</defs>
+<style>
+  text { font-family: Helvetica, Arial, sans-serif; }
+  .lbl { font-size: 12px; fill: #111; }
+  .htxt { font-size: 13px; font-weight: bold; fill: #111; text-decoration: underline; }
+  .head { fill: #EEF4FB; stroke: #333; stroke-width: 1.3; }
+  .life { stroke: #888; stroke-dasharray: 6 5; }
+  .msg { stroke: #333; stroke-width: 1.3; }
+  .ret { stroke: #333; stroke-width: 1.2; stroke-dasharray: 5 4; }
+  .frame { fill: rgba(240, 240, 240, 0.35); stroke: #555; stroke-width: 1.2; }
+  .tag { fill: #FFF8E1; stroke: #555; }
+  .ftag { font-size: 12px; font-weight: bold; }
+  .note { fill: #FFFDE7; stroke: #C9B458; }
+</style>
+<rect width="100%" height="100%" fill="white"/>
+<text x="940.0" y="38" text-anchor="middle" font-size="22" font-weight="bold">Phantom Maze — Sequence Diagram: one frame of the game loop</text>
+<line x1="115.0" y1="104" x2="115.0" y2="1234" class="life"/>
+<rect x="48.0" y="70" width="134" height="34" class="head"/>
+<text x="115.0" y="92" class="htxt" text-anchor="middle">:javax.swing.Timer</text>
+<line x1="265.0" y1="104" x2="265.0" y2="1234" class="life"/>
+<rect x="198.0" y="70" width="134" height="34" class="head"/>
+<text x="265.0" y="92" class="htxt" text-anchor="middle">:GameLoop</text>
+<line x1="415.0" y1="104" x2="415.0" y2="1234" class="life"/>
+<rect x="348.0" y="70" width="134" height="34" class="head"/>
+<text x="415.0" y="92" class="htxt" text-anchor="middle">:InputController</text>
+<line x1="565.0" y1="104" x2="565.0" y2="1234" class="life"/>
+<rect x="498.0" y="70" width="134" height="34" class="head"/>
+<text x="565.0" y="92" class="htxt" text-anchor="middle">:Game</text>
+<line x1="715.0" y1="104" x2="715.0" y2="1234" class="life"/>
+<rect x="648.0" y="70" width="134" height="34" class="head"/>
+<text x="715.0" y="92" class="htxt" text-anchor="middle">:Player</text>
+<line x1="865.0" y1="104" x2="865.0" y2="1234" class="life"/>
+<rect x="798.0" y="70" width="134" height="34" class="head"/>
+<text x="865.0" y="92" class="htxt" text-anchor="middle">:EnemyAI</text>
+<line x1="1015.0" y1="104" x2="1015.0" y2="1234" class="life"/>
+<rect x="948.0" y="70" width="134" height="34" class="head"/>
+<text x="1015.0" y="92" class="htxt" text-anchor="middle">e: Enemy</text>
+<line x1="1165.0" y1="104" x2="1165.0" y2="1234" class="life"/>
+<rect x="1098.0" y="70" width="134" height="34" class="head"/>
+<text x="1165.0" y="92" class="htxt" text-anchor="middle">:GamePanel</text>
+<line x1="1315.0" y1="104" x2="1315.0" y2="1234" class="life"/>
+<rect x="1248.0" y="70" width="134" height="34" class="head"/>
+<text x="1315.0" y="92" class="htxt" text-anchor="middle">:WorldRenderer</text>
+<line x1="1465.0" y1="104" x2="1465.0" y2="1234" class="life"/>
+<rect x="1398.0" y="70" width="134" height="34" class="head"/>
+<text x="1465.0" y="92" class="htxt" text-anchor="middle">:Raycaster</text>
+<line x1="1615.0" y1="104" x2="1615.0" y2="1234" class="life"/>
+<rect x="1548.0" y="70" width="134" height="34" class="head"/>
+<text x="1615.0" y="92" class="htxt" text-anchor="middle">:SpriteRenderer</text>
+<line x1="1765.0" y1="104" x2="1765.0" y2="1234" class="life"/>
+<rect x="1698.0" y="70" width="134" height="34" class="head"/>
+<text x="1765.0" y="92" class="htxt" text-anchor="middle">:HudRenderer</text>
+<rect x="1245.0" y="982" width="290.0" height="112" class="frame"/>
+<rect x="495.0" y="362" width="590.0" height="436" class="frame"/>
+<rect x="503.0" y="600" width="574.0" height="146" class="frame"/>
+<rect x="503.0" y="474" width="424.0" height="82" class="frame"/>
+<line x1="115.0" y1="134" x2="265.0" y2="134" class="msg" marker-end="url(#solid)"/>
+<text x="121.0" y="128" class="lbl">tick()   [every ~16 ms]</text>
+<path d="M265.0,160 h34 v18 h-34" class="msg" fill="none" marker-end="url(#solid)"/>
+<text x="305.0" y="173" class="lbl">dt = min(0.1 s, time since last tick)</text>
+<line x1="265.0" y1="206" x2="415.0" y2="206" class="msg" marker-end="url(#solid)"/>
+<text x="271.0" y="200" class="lbl">applyTo(game)</text>
+<line x1="415.0" y1="240" x2="715.0" y2="240" class="msg" marker-end="url(#solid)"/>
+<text x="421.0" y="234" class="lbl">setIntents(forward, strafe, turn)</text>
+<line x1="415.0" y1="274" x2="715.0" y2="274" class="msg" marker-end="url(#solid)"/>
+<text x="421.0" y="268" class="lbl">rotate(mouseDx × sensitivity)</text>
+<line x1="415.0" y1="308" x2="565.0" y2="308" class="msg" marker-end="url(#solid)"/>
+<text x="421.0" y="302" class="lbl">setTriggerHeld(fire)</text>
+<line x1="265.0" y1="342" x2="565.0" y2="342" class="msg" marker-end="url(#solid)"/>
+<text x="271.0" y="336" class="lbl">update(dt)</text>
+<line x1="565.0" y1="416" x2="715.0" y2="416" class="msg" marker-end="url(#solid)"/>
+<text x="571.0" y="410" class="lbl">update(dt, map, speedMultiplier)</text>
+<path d="M565.0,442 h34 v18 h-34" class="msg" fill="none" marker-end="url(#solid)"/>
+<text x="605.0" y="455" class="lbl">eatDot() / pickUpPowerUp()</text>
+<path d="M565.0,520 h34 v18 h-34" class="msg" fill="none" marker-end="url(#solid)"/>
+<text x="605.0" y="533" class="lbl">fire()  → hurt() / kill() target</text>
+<path d="M503.0,474 h130.60000000000002 v14 l-8,8 h-122.60000000000002 z" class="tag"/>
+<text x="508.0" y="489" class="ftag">opt  [trigger held]</text>
+<line x1="565.0" y1="580" x2="865.0" y2="580" class="msg" marker-end="url(#solid)"/>
+<text x="571.0" y="574" class="lbl">updatePlayer()   (BFS distance field)</text>
+<line x1="565.0" y1="654" x2="1015.0" y2="654" class="msg" marker-end="url(#solid)"/>
+<text x="571.0" y="648" class="lbl">tick(dt)</text>
+<line x1="565.0" y1="688" x2="865.0" y2="688" class="msg" marker-end="url(#solid)"/>
+<text x="571.0" y="682" class="lbl">move(e, speed × dt, scatterMode)</text>
+<line x1="865.0" y1="722" x2="1015.0" y2="722" class="msg" marker-end="url(#solid)"/>
+<text x="871.0" y="716" class="lbl">advance(distance) / setDirection(dx, dy)</text>
+<path d="M503.0,600 h220.20000000000002 v14 l-8,8 h-212.20000000000002 z" class="tag"/>
+<text x="508.0" y="615" class="ftag">loop  [for each of the 4 enemies]</text>
+<path d="M565.0,762 h34 v18 h-34" class="msg" fill="none" marker-end="url(#solid)"/>
+<text x="605.0" y="775" class="lbl">checkCaught()</text>
+<path d="M495.0,362 h156.20000000000002 v14 l-8,8 h-148.20000000000002 z" class="tag"/>
+<text x="500.0" y="377" class="ftag">alt  [state == PLAYING]</text>
+<line x1="565.0" y1="822" x2="265.0" y2="822" class="ret" marker-end="url(#open)"/>
+<line x1="265.0" y1="856" x2="1165.0" y2="856" class="msg" marker-end="url(#solid)"/>
+<text x="271.0" y="850" class="lbl">repaint()</text>
+<rect x="1155.0" y="874" width="670.0" height="24" class="note"/>
+<text x="1163.0" y="890" class="lbl" font-style="italic">Swing later calls paintComponent(g) on the event thread</text>
+<path d="M1165.0,916 h34 v18 h-34" class="msg" fill="none" marker-end="url(#solid)"/>
+<text x="1205.0" y="929" class="lbl">paintComponent(g)</text>
+<line x1="1165.0" y1="962" x2="1315.0" y2="962" class="msg" marker-end="url(#solid)"/>
+<text x="1171.0" y="956" class="lbl">render(pixels, player, zBuffer)</text>
+<line x1="1315.0" y1="1036" x2="1465.0" y2="1036" class="msg" marker-end="url(#solid)"/>
+<text x="1321.0" y="1030" class="lbl">cast(px, py, rayX, rayY, hit)</text>
+<line x1="1465.0" y1="1070" x2="1315.0" y2="1070" class="ret" marker-end="url(#open)"/>
+<text x="1321.0" y="1064" class="lbl">hit: RayHit (distance, side)</text>
+<path d="M1245.0,982 h213.8 v14 l-8,8 h-205.8 z" class="tag"/>
+<text x="1250.0" y="997" class="ftag">loop  [for each screen column x]</text>
+<line x1="1165.0" y1="1118" x2="1615.0" y2="1118" class="msg" marker-end="url(#solid)"/>
+<text x="1171.0" y="1112" class="lbl">render(pixels, zBuffer, player)</text>
+<line x1="1165.0" y1="1152" x2="1765.0" y2="1152" class="msg" marker-end="url(#solid)"/>
+<text x="1171.0" y="1146" class="lbl">render(g, game)   (gun, face, ammo, score)</text>
+<path d="M1165.0,1178 h34 v18 h-34" class="msg" fill="none" marker-end="url(#solid)"/>
+<text x="1205.0" y="1191" class="lbl">drawImage(frame) scaled to window</text>
+</svg>
