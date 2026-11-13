@@ -48,5 +48,8 @@ While playing, the mouse pointer is hidden and held in the middle of the window.
 - The minimap shows enemies only while a power-up is active.
 - Sixth sense: when a dangerous enemy is within 5 tiles' walk but you can't see it, the screen edge pulses red on the side it will come from (top = ahead, bottom = behind you), stronger as it gets closer. For an enemy hidden around a corner, the glow points at that corner, not through the wall.
 
+## Documentation
+Generated Javadoc is in `docs/javadoc`; open `docs/javadoc/index.html` in a browser. After changing code comments, regenerate it in IntelliJ with **Tools → Generate JavaDoc…** (whole project, output `docs/javadoc`, visibility **package**).
+
 ## Assets
 Sprites, HUD graphics, font, and sounds are from [Freedoom](https://freedoom.github.io/). Their license and credits are in `src/main/resources/freedoom/COPYING.adoc` and `src/main/resources/freedoom/CREDITS`.
