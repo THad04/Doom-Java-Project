@@ -33,6 +33,14 @@ public class ScreenController implements InputController.Actions {
         frame.showMenu();
     }
 
+    /**
+     * Starts a new run: builds a fresh {@link Game} on the level map with the chosen
+     * difficulty, connects sound and the view to it, then switches to the game screen,
+     * captures the mouse and starts the game loop.
+     *
+     * @param difficulty       enemy speed, power-up length and other tuning
+     * @param mouseSensitivity how fast the mouse turns the player
+     */
     private void startGame(Difficulty difficulty, int mouseSensitivity) {
         game = new Game(GameMap.fromResource(MAP_PATH), difficulty);
         game.setSoundListener(sounds);
@@ -44,6 +52,10 @@ public class ScreenController implements InputController.Actions {
         loop.start();
     }
 
+    /**
+     * Returns to the main menu: stops the game loop, releases the mouse and discards
+     * the current {@link Game}.
+     */
     private void showMenu() {
         loop.stop();
         input.releaseMouse();
@@ -52,6 +64,11 @@ public class ScreenController implements InputController.Actions {
         frame.showMenu();
     }
 
+    /**
+     * Toggles pause. While {@code PLAYING} the game is paused and the mouse is released;
+     * while {@code PAUSED} the game resumes and the mouse is captured again.
+     * Does nothing in other states or when no game is running.
+     */
     @Override
     public void escape() {
         if (game == null) {
@@ -66,6 +83,10 @@ public class ScreenController implements InputController.Actions {
         }
     }
 
+    /**
+     * Handles Enter: when the game is over or the level is complete, returns to the
+     * main menu. Ignored in every other state.
+     */
     @Override
     public void confirm() {
         if (game != null && (game.getState() == GameState.GAME_OVER || game.getState() == GameState.LEVEL_COMPLETE)) {
@@ -73,6 +94,10 @@ public class ScreenController implements InputController.Actions {
         }
     }
 
+    /**
+     * Handles Q: returns to the main menu if the game is paused, over, or complete.
+     * Ignored while the game is actively {@code PLAYING}.
+     */
     @Override
     public void quitToMenu() {
         if (game != null && game.getState() != GameState.PLAYING) { // paused, game over, or level complete
@@ -80,11 +105,19 @@ public class ScreenController implements InputController.Actions {
         }
     }
 
+    /**
+     * Handles M: shows or hides the minimap. This only changes the view; the game
+     * state is not touched.
+     */
     @Override
     public void toggleMinimap() {
         gamePanel.toggleMinimap();
     }
 
+    /**
+     * Handles a click while the mouse is released: resumes a {@code PAUSED} game, and if
+     * the game is then {@code PLAYING}, captures the mouse again.
+     */
     @Override
     public void clickWhileReleased() {
         if (game == null) {
@@ -98,6 +131,10 @@ public class ScreenController implements InputController.Actions {
         }
     }
 
+    /**
+     * Handles the window losing focus: pauses a {@code PLAYING} game so the player is
+     * not attacked while away, and always releases the mouse.
+     */
     @Override
     public void focusLost() {
         if (game != null && game.getState() == GameState.PLAYING) {

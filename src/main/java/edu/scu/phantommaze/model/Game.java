@@ -7,7 +7,8 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Root of the game model. Owns the map, the player, the enemies and the rules that connect
+ * Root of the game model. Owns the map, the player, the enemies and the rules
+ * that connect
  * them: shooting, power-ups, getting caught, and running out of health.
  */
 public class Game {
@@ -33,7 +34,8 @@ public class Game {
     private final List<int[]> powerUpView = Collections.unmodifiableList(powerUps);
     private final EnemyAI ai;
     private final Random random = new Random();
-    private SoundListener sounds = (sound, volume, pan) -> { }; // silent until the audio is connected
+    private SoundListener sounds = (sound, volume, pan) -> {
+    }; // silent until the audio is connected
     private GameState state = GameState.PLAYING; // what mode the game is in
 
     private int lives = Config.PLAYER_LIVES;
@@ -62,7 +64,8 @@ public class Game {
     /**
      * Creates a game on a map.
      *
-     * @param map        the level map; it must contain a ghost pen ({@code G}) with a door ({@code -})
+     * @param map        the level map; it must contain a ghost pen ({@code G}) with
+     *                   a door ({@code -})
      * @param difficulty enemy speed, power-up length and other tuning
      * @throws IllegalArgumentException if the map has no pen or no pen door
      */
@@ -154,7 +157,10 @@ public class Game {
         updateGrowls(dt);
     }
 
-    /** Puts the player and enemies at their starting spots, enemies leaving the pen one by one. */
+    /**
+     * Puts the player and enemies at their starting spots, enemies leaving the pen
+     * one by one.
+     */
     private void startRound() {
         player.respawn(map.getPlayerStart(), START_ANGLE);
         weapons.reset();
@@ -224,7 +230,8 @@ public class Game {
             }
         }
 
-        // Check the gun again: the kill above may have completed a combo and handed over the BFG.
+        // Check the gun again: the kill above may have completed a combo and handed
+        // over the BFG.
         if (weapons.getCurrent() == Weapon.SHOTGUN && weapons.getAmmo() == 0) {
             returnToPistol(); // out of shells: back to the pistol, armor stays
         } else if (weapons.getCurrent() == Weapon.PISTOL && weapons.getAmmo() == 0) {
@@ -233,7 +240,8 @@ public class Game {
     }
 
     /**
-     * The BFG's blast: like Doom's BFG spray, it kills every enemy in a wide cone in front of
+     * The BFG's blast: like Doom's BFG spray, it kills every enemy in a wide cone
+     * in front of
      * the player that is not hidden behind a wall.
      */
     private void bfgBlast() {
@@ -257,7 +265,8 @@ public class Game {
     }
 
     /**
-     * Hits the closest enemy near the aim line, provided both that line and the line to
+     * Hits the closest enemy near the aim line, provided both that line and the
+     * line to
      * the enemy's center are clear. Aim assistance must not reach around a wall.
      */
     private Enemy findShotTarget(double hitRadius) {
@@ -286,7 +295,10 @@ public class Game {
         return best;
     }
 
-    /** Traverses every tile touched by a segment, including both sides of grid corners. */
+    /**
+     * Traverses every tile touched by a segment, including both sides of grid
+     * corners.
+     */
     private boolean hasClearPath(double fromX, double fromY, double toX, double toY) {
         int tileX = (int) Math.floor(fromX);
         int tileY = (int) Math.floor(fromY);
@@ -347,8 +359,10 @@ public class Game {
     }
 
     /**
-     * Points for a kill: BFG kills during rampage are flat; frightened enemies double in value
-     * with each kill in the same power-up, like Pac-Man's ghosts; anything else is a pistol kill.
+     * Points for a kill: BFG kills during rampage are flat; frightened enemies
+     * double in value
+     * with each kill in the same power-up, like Pac-Man's ghosts; anything else is
+     * a pistol kill.
      */
     private int killPoints(Enemy e) {
         if (rampage) {
@@ -363,8 +377,10 @@ public class Game {
     }
 
     /**
-     * Every enemy was killed in one quick streak: the shotgun burns away for the BFG, the power-up
-     * gets bonus time with full armor, and enemies waiting in the pen come straight back out
+     * Every enemy was killed in one quick streak: the shotgun burns away for the
+     * BFG, the power-up
+     * gets bonus time with full armor, and enemies waiting in the pen come straight
+     * back out
      * (still frightened) so there is something to shoot.
      */
     private void startRampage() {
@@ -384,7 +400,10 @@ public class Game {
         }
     }
 
-    /** Runs the combo clock, the flame transition, the BFG charge, and the fading explosions. */
+    /**
+     * Runs the combo clock, the flame transition, the BFG charge, and the fading
+     * explosions.
+     */
     private void updateRampage(double dt) {
         combo.update(dt);
         rampageTransition = Math.max(0, rampageTransition - dt);
@@ -404,7 +423,10 @@ public class Game {
         }
     }
 
-    /** Clears the combo and rampage, e.g. when the power-up ends or a new round starts. */
+    /**
+     * Clears the combo and rampage, e.g. when the power-up ends or a new round
+     * starts.
+     */
     private void endRampage() {
         rampage = false;
         rampageTransition = 0;
@@ -413,7 +435,10 @@ public class Game {
         blasts.clear();
     }
 
-    /** Picking up a power pellet gives the shotgun, a fresh box of shells, and full armor. */
+    /**
+     * Picking up a power pellet gives the shotgun, a fresh box of shells, and full
+     * armor.
+     */
     private void pickUpPowerUp() {
         int tx = (int) Math.floor(player.getX());
         int ty = (int) Math.floor(player.getY());
@@ -482,7 +507,8 @@ public class Game {
     /**
      * Pac-Man's "Cruise Elroy" for the Cacodemon (Blinky).
      *
-     * @return 0 normally, 1 with {@link Config#ELROY_DOTS} dots left, 2 with {@link Config#ELROY_2_DOTS} left
+     * @return 0 normally, 1 with {@link Config#ELROY_DOTS} dots left, 2 with
+     *         {@link Config#ELROY_2_DOTS} left
      */
     private int elroyLevel() {
         if (dotsLeft <= Config.ELROY_2_DOTS) {
@@ -519,7 +545,10 @@ public class Game {
         }
     }
 
-    /** Pac-Man's rhythm: enemies alternate between hunting and taking a break in their corners. */
+    /**
+     * Pac-Man's rhythm: enemies alternate between hunting and taking a break in
+     * their corners.
+     */
     private void updateScatterChase(double dt) {
         if (powerUpTimer > 0) {
             return; // the clock pauses while enemies are frightened
@@ -538,7 +567,10 @@ public class Game {
         }
     }
 
-    /** Touching an enemy costs a third of the player's health, unless armor or respawn grace protects them. */
+    /**
+     * Touching an enemy costs a third of the player's health, unless armor or
+     * respawn grace protects them.
+     */
     private void checkCaught() {
         if (isPlayerInvulnerable()) {
             return;
@@ -558,7 +590,10 @@ public class Game {
         }
     }
 
-    /** Nearby enemies growl now and then, louder when closer, from the side they are on. */
+    /**
+     * Nearby enemies growl now and then, louder when closer, from the side they are
+     * on.
+     */
     private void updateGrowls(double dt) {
         for (int i = 0; i < enemies.size(); i++) {
             Enemy e = enemies.get(i);
@@ -605,8 +640,10 @@ public class Game {
     }
 
     /**
-     * How strongly the "sixth sense" should warn about an enemy. Only enemies that can hurt
-     * the player count (not frightened ones, not ones in the pen), measured by walking distance
+     * How strongly the "sixth sense" should warn about an enemy. Only enemies that
+     * can hurt
+     * the player count (not frightened ones, not ones in the pen), measured by
+     * walking distance
      * so an enemy on the other side of a wall does not set it off.
      *
      * @param e the enemy
@@ -624,12 +661,16 @@ public class Game {
     }
 
     /**
-     * Which way the "sixth sense" should point for an enemy. If nothing blocks the view, that is
-     * straight at the enemy. Otherwise it follows the enemy's walk toward the player and points at
-     * the first spot the player can see - usually the corner the enemy will come around.
+     * Which way the "sixth sense" should point for an enemy. If nothing blocks the
+     * view, that is
+     * straight at the enemy. Otherwise it follows the enemy's walk toward the
+     * player and points at
+     * the first spot the player can see - usually the corner the enemy will come
+     * around.
      *
      * @param e the enemy
-     * @return radians like {@link #relativeAngle}: 0 = straight ahead, positive = to the right
+     * @return radians like {@link #relativeAngle}: 0 = straight ahead, positive =
+     *         to the right
      */
     public double threatAngle(Enemy e) {
         double px = player.getX();
@@ -660,7 +701,8 @@ public class Game {
 
     /**
      * @param e the enemy
-     * @return true if the enemy is on screen and no wall hides it, so no warning is needed
+     * @return true if the enemy is on screen and no wall hides it, so no warning is
+     *         needed
      */
     public boolean isInPlainSight(Enemy e) {
         return Math.abs(relativeAngle(e)) <= Math.toRadians(Config.FOV_DEGREES / 2.0)
@@ -673,7 +715,8 @@ public class Game {
     }
 
     /**
-     * Holds or releases the trigger. While held, the gun fires as fast as it is allowed to.
+     * Holds or releases the trigger. While held, the gun fires as fast as it is
+     * allowed to.
      *
      * @param held true while the fire button is down
      */
@@ -760,7 +803,10 @@ public class Game {
         return (int) Math.round(lives * 100.0 / Config.PLAYER_LIVES);
     }
 
-    /** @return armor shown on the status bar: counts down from 100 to 0 while the power-up lasts */
+    /**
+     * @return armor shown on the status bar: counts down from 100 to 0 while the
+     *         power-up lasts
+     */
     public int getArmorPercent() {
         if (powerUpTimer <= 0) {
             return 0;
@@ -788,7 +834,10 @@ public class Game {
         return rampage;
     }
 
-    /** @return how far the flame transition still has to go: 1 when rampage starts, 0 when done */
+    /**
+     * @return how far the flame transition still has to go: 1 when rampage starts,
+     *         0 when done
+     */
     public double getRampageTransition() {
         return rampageTransition / Config.RAMPAGE_TRANSITION_TIME;
     }

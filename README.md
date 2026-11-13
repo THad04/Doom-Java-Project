@@ -2,8 +2,44 @@
 
 First-person Pac-Man with Doom-style enemies, HUD, and weapons. Java 17 Swing project.
 
-## Run
-Open the folder in IntelliJ IDEA as a Maven project and run `edu.scu.phantommaze.App`.
+## Team
+- Teagan Haddawy
+- Julian Jackson
+
+## What makes it a fusion game
+- **Raycaster from scratch:** the first-person 3D view is built with a hand-written raycaster (walls, floor, ceiling, sprites, fog) drawn with plain Java 2D, with no game engine or 3D library.
+- **Pac-Man ghost AI on Doom enemies:** the four ghosts' targeting rules, scatter/chase cycles, frightened mode and "Cruise Elroy" speed-up are mapped onto the Cacodemon, Demon, Lost Soul and Imp.
+- **Guns replace the power pellet:** a power-up gives a shotgun and armor, so frightened enemies are hunted instead of eaten.
+- **Combo and rampage:** killing all four enemies in one streak unlocks the BFG rampage, and the sixth-sense warning pulses the screen edge when an unseen enemy is close.
+
+## Build, run and test
+```
+mvn compile exec:java   # build and launch the game
+mvn test                # run the unit tests
+```
+You can also open the folder in IntelliJ IDEA as a Maven project and run `edu.scu.phantommaze.App`.
+
+## Architecture (MVC)
+| Package | Role | Main classes |
+|---|---|---|
+| `controller` | Input and screen flow | `ScreenController`, `GameLoop`, `InputController`, `CursorWarp` |
+| `model` | Game rules and state, no Swing | `Game`, `Player`, `Enemy`, `EnemyAI`, `Pathfinder`, `GameMap`, `Weapons`, `Combo` |
+| `view` | Swing windows and rendering | `GameFrame`, `MenuPanel`, `GamePanel`, `WorldRenderer`, `SpriteRenderer`, `HudRenderer`, `MinimapRenderer`, `ThreatIndicator` |
+| `engine` | Raycasting maths | `Raycaster`, `RayHit`, `TextureFactory` |
+| `audio` | Sound effects | `SoundPlayer` |
+
+## UML diagrams
+- [Class diagram](docs/uml/class-diagram.png)
+- [Sequence diagram](docs/uml/sequence-diagram.png) (one game frame)
+- [State diagram](docs/uml/state-diagram.png) (game screens and enemy states)
+
+## Tests
+JUnit tests in `src/test/java/edu/scu/phantommaze/model/`:
+- `GameCombatTest`: shooting and line of sight, pistol hits, power-up and armor, getting caught, sixth sense, combo and BFG rampage.
+- `DotsAndScoreTest`: dots, scoring, level completion, lives, and the Cacodemon speed-up.
+- `EnemyNavigationTest`: pen exit, reversing direction, and `Pathfinder` routing.
+- `WeaponsTest`: pistol clip and reload, shotgun ammo, and switching guns.
+- `ModelTestMaps`: small test maps shared by the tests.
 
 ## Controls
 - `W` `A` `S` `D`: move

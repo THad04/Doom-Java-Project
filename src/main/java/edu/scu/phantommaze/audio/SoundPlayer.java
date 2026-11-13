@@ -55,6 +55,14 @@ public class SoundPlayer implements SoundListener {
         }
     }
 
+    /**
+     * Queues a sound on the audio thread and returns immediately, so the game loop never
+     * waits on the operating system's audio layer. Silent or unloaded sounds are skipped.
+     *
+     * @param sound  which sound to play
+     * @param volume loudness from 0 (silent) to 1 (full)
+     * @param pan    stereo position from -1 (left) to 1 (right)
+     */
     @Override
     public void play(Sound sound, double volume, double pan) {
         if (!clips.containsKey(sound) || volume <= 0) {

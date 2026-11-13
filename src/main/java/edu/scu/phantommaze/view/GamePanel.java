@@ -80,6 +80,7 @@ public class GamePanel extends JPanel {
         showMinimap = !showMinimap;
     }
 
+    /** Draws one frame: the 3D world, then sprites, then the HUD (and minimap if shown). */
     @Override
     protected void paintComponent(Graphics graphics) {
         super.paintComponent(graphics);
