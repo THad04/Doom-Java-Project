@@ -125,6 +125,7 @@ public class MenuPanel extends JPanel {
         add(Box.createVerticalGlue());
     }
 
+    /** Draws the main menu: title, difficulty and sensitivity choices. */
     @Override
     protected void paintComponent(Graphics graphics) {
         Graphics2D g = (Graphics2D) graphics;
