@@ -1,37 +1,21 @@
 # Phantom Maze
 
-First-person Pac-Man with Doom-style enemies, HUD, and weapons. Java 17 Swing project.
+First-person Pac-Man with Doom-style enemies, HUD, and weapons.
 
 ## Team
 - Teagan Haddawy
 - Julian Jackson
 
 ## What makes it a fusion game
-- **Raycaster from scratch:** the first-person 3D view is built with a hand-written raycaster (walls, floor, ceiling, sprites, fog) drawn with plain Java 2D, with no game engine or 3D library.
-- **Pac-Man ghost AI on Doom enemies:** the four ghosts' targeting rules, scatter/chase cycles, frightened mode and "Cruise Elroy" speed-up are mapped onto the Cacodemon, Demon, Lost Soul and Imp.
-- **Guns replace the power pellet:** a power-up gives a shotgun and armor, so frightened enemies are hunted instead of eaten.
-- **Combo and rampage:** killing all four enemies in one streak unlocks the BFG rampage, and the sixth-sense warning pulses the screen edge when an unseen enemy is close.
+- RayCaster From Scratch: the first-person 3D view is built with a hand-written raycaster (walls, floor, ceiling, sprites, fog) drawn with plain Java 2D, with no game engine or 3D library. This uses the same technique the original Wolfenstein used.
+- Pac-Man ghost AI on Doom enemies: the four ghosts' targeting rules, scatter/chase cycles, frightened mode and "Cruise Elroy" speed-up are mapped onto the Cacodemon, Demon, Lost Soul and Imp.
+- Guns replace the power pellet: a power-up gives a shotgun and armor, so frightened enemies are hunted instead of eaten.
+- Combo and rampage: killing all four enemies in one streak unlocks the BFG rampage, and the sixth-sense warning pulses the screen edge when an unseen enemy is close.
 
 ## Build, run and test
-```
+
 mvn compile exec:java   # build and launch the game
 mvn test                # run the unit tests
-```
-You can also open the folder in IntelliJ IDEA as a Maven project and run `edu.scu.phantommaze.App`.
-
-## Architecture (MVC)
-| Package | Role | Main classes |
-|---|---|---|
-| `controller` | Input and screen flow | `ScreenController`, `GameLoop`, `InputController`, `CursorWarp` |
-| `model` | Game rules and state, no Swing | `Game`, `Player`, `Enemy`, `EnemyAI`, `Pathfinder`, `GameMap`, `Weapons`, `Combo` |
-| `view` | Swing windows and rendering | `GameFrame`, `MenuPanel`, `GamePanel`, `WorldRenderer`, `SpriteRenderer`, `HudRenderer`, `MinimapRenderer`, `ThreatIndicator` |
-| `engine` | Raycasting maths | `Raycaster`, `RayHit`, `TextureFactory` |
-| `audio` | Sound effects | `SoundPlayer` |
-
-## UML diagrams
-- [Class diagram](docs/uml/class-diagram.png)
-- [Sequence diagram](docs/uml/sequence-diagram.png) (one game frame)
-- [State diagram](docs/uml/state-diagram.png) (game screens and enemy states)
 
 ## Tests
 JUnit tests in `src/test/java/edu/scu/phantommaze/model/`:
@@ -49,7 +33,7 @@ JUnit tests in `src/test/java/edu/scu/phantommaze/model/`:
 - `M`: minimap
 - `Esc`: pause; click to resume or press `Q` for the main menu
 
-While playing, the mouse pointer is hidden and held in the middle of the window. On macOS this uses CoreGraphics through the JNA library, so no Accessibility permission is needed; IntelliJ downloads JNA automatically from `pom.xml`.
+While playing, the mouse pointer is hidden and held in the middle of the window. On macOS this uses CoreGraphics through the JNA library, so no Accessibility permission is needed;
 
 ## Gameplay
 - Goal: eat every glowing dot (and the 4 power-ups) to complete the level. Eaten dots stay eaten when you lose a life. The status bar shows the dots left; the win screen shows score, time, and kills.
